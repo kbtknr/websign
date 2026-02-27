@@ -16,6 +16,7 @@ export default [
       globals: {
         URLSearchParams: "readonly",
         Headers: "readonly",
+        BufferSource: "readonly",
       },
     },
     plugins: {
