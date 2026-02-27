@@ -46,7 +46,9 @@ export async function computeSignature(
 ): Promise<{ signature: string; signedHeaders: string }> {
   const normalizedHeaders = normalizeHeaders(params.headers);
   const signedHeaders = buildSignedHeaders(normalizedHeaders);
-  const normalizedQuery = normalizeQueryString(params.query ?? new URLSearchParams());
+  const normalizedQuery = normalizeQueryString(
+    params.query ?? new URLSearchParams(),
+  );
   const payloadHash = await crypto.sha256Hex(params.payload ?? "");
   const canonicalRequest = [
     params.method.toUpperCase(),
@@ -59,7 +61,11 @@ export async function computeSignature(
   ].join("\n");
 
   const canonicalRequestHash = await crypto.sha256Hex(canonicalRequest);
-  const stringToSign = [ALGORITHM, params.credentialTime, canonicalRequestHash].join("\n");
+  const stringToSign = [
+    ALGORITHM,
+    params.credentialTime,
+    canonicalRequestHash,
+  ].join("\n");
   const signature = await crypto.hmacSha256Hex(params.secretKey, stringToSign);
 
   return { signature, signedHeaders };

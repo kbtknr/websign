@@ -1,8 +1,13 @@
-import type { HeaderPrimitive, HeaderRecord, NormalizeHeadersInput } from "./types";
+import type {
+  HeaderPrimitive,
+  HeaderRecord,
+  NormalizeHeadersInput,
+} from "./types";
 
 function encodeRfc3986(value: string): string {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (char) =>
-    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
   );
 }
 
@@ -47,7 +52,9 @@ export function normalizeHeaders(headers: NormalizeHeadersInput): string {
   if (headers instanceof Headers) {
     headers.forEach((value, name) => append(name, value));
   } else if (Symbol.iterator in Object(headers)) {
-    for (const [name, value] of headers as Iterable<[string, HeaderPrimitive]>) {
+    for (const [name, value] of headers as Iterable<
+      [string, HeaderPrimitive]
+    >) {
       append(name, value);
     }
   } else {
@@ -80,7 +87,9 @@ export function parseDateTime(credentialTime: string): Date {
   );
 
   if (!match) {
-    throw new Error("Invalid credentialTime format. Expected YYYYMMDDTHHmmssZ.");
+    throw new Error(
+      "Invalid credentialTime format. Expected YYYYMMDDTHHmmssZ.",
+    );
   }
 
   const [, yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr] = match;

@@ -34,7 +34,10 @@ const cryptoImpl = {
   hmacSha256Hex,
 };
 
-function timingSafeEqualHex(expectedSignature: string, actualSignature: string): boolean {
+function timingSafeEqualHex(
+  expectedSignature: string,
+  actualSignature: string,
+): boolean {
   const expected = Buffer.from(expectedSignature, "hex");
   const actual = Buffer.from(actualSignature, "hex");
 
@@ -48,6 +51,8 @@ export async function createSignature(input: SignatureInput) {
   return createSignatureBase(input, cryptoImpl);
 }
 
-export async function verifySignature(input: VerifySignatureInput): Promise<boolean> {
+export async function verifySignature(
+  input: VerifySignatureInput,
+): Promise<boolean> {
   return verifySignatureBase(input, cryptoImpl, timingSafeEqualHex);
 }
