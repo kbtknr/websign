@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import globals from "globals";
 
 export default [
   {
@@ -14,8 +15,7 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
-        URLSearchParams: "readonly",
-        Headers: "readonly",
+        ...globals.browser,
         BufferSource: "readonly",
       },
     },
@@ -30,8 +30,7 @@ export default [
     files: ["lib/browser/**/*.ts"],
     languageOptions: {
       globals: {
-        crypto: "readonly",
-        TextEncoder: "readonly",
+        ...globals.browser,
       },
     },
   },
@@ -39,7 +38,7 @@ export default [
     files: ["lib/server/**/*.ts"],
     languageOptions: {
       globals: {
-        Buffer: "readonly",
+        ...globals.node,
       },
     },
   },
