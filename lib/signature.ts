@@ -2,7 +2,6 @@ import {
   formatDateTime,
   normalizeHeaders,
   normalizeQueryString,
-  parseDateTime,
 } from "./helpers";
 import type {
   PayloadInput,
@@ -30,14 +29,6 @@ function buildSignedHeaders(normalizedHeaders: string): string {
     .map((line) => line.split(":")[0])
     .filter(Boolean)
     .join(";");
-}
-
-export function toCredentialTime(value: Date | string): string {
-  if (value instanceof Date) {
-    return formatDateTime(value);
-  }
-  parseDateTime(value);
-  return value;
 }
 
 export async function computeSignature(
@@ -75,7 +66,7 @@ export async function createSignature(
   input: SignatureInput,
   crypto: SignatureCrypto,
 ): Promise<SignatureResult> {
-  const credentialTime = formatDateTime(input.credentialTime ?? new Date());
+  const credentialTime = formatDateTime(input.credentialTime);
   const { signature, signedHeaders } = await computeSignature(
     {
       ...input,
@@ -97,7 +88,7 @@ export async function verifySignature(
   crypto: SignatureCrypto,
   compare: (expected: string, actual: string) => boolean | Promise<boolean>,
 ): Promise<boolean> {
-  const credentialTime = toCredentialTime(input.credentialTime);
+  const credentialTime = formatDateTime(input.credentialTime);
   const { signature } = await computeSignature(
     {
       ...input,

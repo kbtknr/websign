@@ -11,18 +11,19 @@ export type PayloadInput = string | ArrayBuffer | Uint8Array | null;
 
 export type SignatureAlgorithm = "HMAC-SHA256";
 
-export interface SignatureInput {
+export interface SignatureInput<TPayload = PayloadInput> {
   method: string;
   path: string;
   query?: URLSearchParams;
   headers: NormalizeHeadersInput;
-  payload?: PayloadInput;
-  credentialTime?: Date;
+  payload?: TPayload;
+  credentialTime: Date;
   secretKey: string;
 }
 
-export interface VerifySignatureInput extends SignatureInput {
-  credentialTime: Date | string;
+export interface VerifySignatureInput<
+  TPayload = PayloadInput,
+> extends SignatureInput<TPayload> {
   signature: string;
 }
 
