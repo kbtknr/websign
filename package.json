@@ -6,16 +6,19 @@
   "description": "Web API request signature utilities for browser and Node.js.",
   "scripts": {
     "lint:eslint": "eslint \"lib/**/*.ts\"",
+    "lint:tsc": "tsc --noEmit",
     "fix:prettier": "prettier --write .",
     "fix:eslint": "eslint \"lib/**/*.ts\" --fix",
     "lint:prettier": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.10",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
     "eslint": "^9.21.0",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
   },
   "files": [
     "lib"
