@@ -1,8 +1,4 @@
-import type {
-  HeaderPrimitive,
-  HeaderRecord,
-  NormalizeHeadersInput,
-} from "./types";
+import type { HeaderRecord, NormalizeHeadersInput } from "./types";
 
 function encodeRfc3986(value: string): string {
   return encodeURIComponent(value).replace(
@@ -22,51 +18,60 @@ export function normalizeQueryString(params: URLSearchParams): string {
     pairs.push([encodeRfc3986(key), encodeRfc3986(value)]);
   }
 
-  pairs.sort(([keyA], [keyB]) => {
-    if (keyA < keyB) return -1;
-    if (keyA > keyB) return 1;
-    return 0;
-  });
+  pairs.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
 
   return pairs.map(([key, value]) => `${key}=${value}`).join("&");
 }
 
 export function normalizeHeaders(headers: NormalizeHeadersInput): string {
-  const map = new Map<string, string[]>();
+  const pairs = new Map<string, string[]>();
 
-  const append = (name: string, rawValue: HeaderPrimitive): void => {
+  const append = (name: string, rawValue: string): void => {
     const key = name.toLowerCase().trim();
     if (!key) return;
 
-    const value = normalizeHeaderValue(String(rawValue));
-    const current = map.get(key);
+    const value = normalizeHeaderValue(rawValue);
+    const current = pairs.get(key);
 
     if (current) {
       current.push(value);
       return;
     }
 
-    map.set(key, [value]);
+    pairs.set(key, [value]);
+  };
+
+  const appendValues = (
+    name: string,
+    rawValue: string | ReadonlyArray<string>,
+  ): void => {
+    if (typeof rawValue === "string") {
+      append(name, rawValue);
+      return;
+    }
+
+    for (const value of rawValue) {
+      append(name, value);
+    }
   };
 
   if (headers instanceof Headers) {
     headers.forEach((value, name) => append(name, value));
   } else if (Symbol.iterator in Object(headers)) {
     for (const [name, value] of headers as Iterable<
-      [string, HeaderPrimitive]
+      [string, string | ReadonlyArray<string>]
     >) {
-      append(name, value);
+      appendValues(name, value);
     }
   } else {
     for (const [name, value] of Object.entries(headers as HeaderRecord)) {
-      if (value == null) continue;
-      append(name, value);
+      appendValues(name, value);
     }
   }
 
-  return [...map.entries()]
+  return [...pairs.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, values]) => `${name}:${values.join(",")}`)
+    .flatMap(([name, values]) => values.map((value) => `${name}:${value}`))
     .join("\n");
 }
 

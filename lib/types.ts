@@ -1,11 +1,9 @@
-export type HeaderPrimitive = string | number | boolean;
-
-export type HeaderRecord = Record<string, HeaderPrimitive | null | undefined>;
+export type HeaderRecord = Record<string, string | ReadonlyArray<string>>;
 
 export type NormalizeHeadersInput =
   | Headers
   | HeaderRecord
-  | Iterable<[string, HeaderPrimitive]>;
+  | Iterable<[string, string | ReadonlyArray<string>]>;
 
 export type PayloadInput = string | ArrayBuffer | Uint8Array | null;
 
