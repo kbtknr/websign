@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createSignature as createServerSignature } from "../../lib/server/signature";
-import { signatureCase } from "../shared/signature-case";
+import { signaturePatterns } from "../shared/signature-case";
 
 test.describe("browser signature", () => {
   test.beforeEach(async ({ page }) => {
@@ -8,54 +8,55 @@ test.describe("browser signature", () => {
   });
 
   test("サーバと同じ入力で同じ署名を返す", async ({ page }) => {
-    const input = {
-      method: signatureCase.method,
-      path: signatureCase.path,
-      query: signatureCase.query,
-      headers: signatureCase.headers,
-      payload: signatureCase.payload,
-      credentialTime: signatureCase.credentialTime,
-      secretKey: signatureCase.secretKey,
-    };
+    // 各パターンごとに署名を作成して検証する
+    for (const { name, input } of signaturePatterns) {
+      const browserResult = await page.evaluate(async (value) => {
+        return window.__browserSignature.createByName(value);
+      }, name);
+      const serverResult = await createServerSignature(input);
 
-    const browserResult = await page.evaluate(async (value) => {
-      return window.__browserSignature.create(value);
-    }, input);
-
-    const serverResult = await createServerSignature({
-      method: signatureCase.method,
-      path: signatureCase.path,
-      query: new URLSearchParams(signatureCase.query),
-      headers: signatureCase.headers,
-      payload: signatureCase.payload,
-      credentialTime: new Date(signatureCase.credentialTime),
-      secretKey: signatureCase.secretKey,
-    });
-
-    expect(browserResult.signature).toBe(serverResult.signature);
-    expect(browserResult.signedHeaders).toBe(serverResult.signedHeaders);
+      expect(browserResult.signature, `signature mismatch: ${name}`).toBe(
+        serverResult.signature,
+      );
+      expect(
+        browserResult.signedHeaders,
+        `signedHeaders mismatch: ${name}`,
+      ).toBe(serverResult.signedHeaders);
+    }
   });
 
   test("改ざん時にブラウザ検証が false になる", async ({ page }) => {
-    const input = {
-      method: signatureCase.method,
-      path: signatureCase.path,
-      query: signatureCase.query,
-      headers: signatureCase.headers,
-      payload: signatureCase.payload,
-      credentialTime: signatureCase.credentialTime,
-      secretKey: signatureCase.secretKey,
-    };
+    const signatures = await Promise.all(
+      signaturePatterns.map(async ({ name }) => {
+        const created = await page.evaluate(async (value) => {
+          return window.__browserSignature.createByName(value);
+        }, name);
+        return { name, signature: created.signature };
+      }),
+    );
 
-    const result = await page.evaluate(async (value) => {
-      const created = await window.__browserSignature.create(value);
-      return window.__browserSignature.verify({
-        ...value,
-        payload: '{"message":"tampered"}',
-        signature: created.signature,
-      });
-    }, input);
+    // 全パターンの署名を組み合わせて、改ざん検証が失敗することを確認する
+    for (const expected of signatures) {
+      for (const actual of signatures) {
+        if (expected.name === actual.name) {
+          continue;
+        }
 
-    expect(result).toBe(false);
+        const result = await page.evaluate(
+          async (value) => {
+            return window.__browserSignature.verifyByName(
+              value.patternName,
+              value.signature,
+            );
+          },
+          { patternName: actual.name, signature: expected.signature },
+        );
+
+        expect(
+          result,
+          `verify should fail: ${expected.name} -> ${actual.name}`,
+        ).toBe(false);
+      }
+    }
   });
 });

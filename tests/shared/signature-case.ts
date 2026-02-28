@@ -1,3 +1,5 @@
+import type { SignatureInput } from "../../lib/types";
+
 export type SignatureCase = {
   name: string;
   method: string;
@@ -25,3 +27,87 @@ export const signatureCase: SignatureCase = {
   credentialTime: "2025-01-01T00:00:00.000Z",
   secretKey: "test-secret-key",
 };
+
+export type SignaturePattern = {
+  name: string;
+  input: SignatureInput;
+};
+
+function createBasePatternInput(): SignatureInput {
+  return {
+    method: signatureCase.method,
+    path: signatureCase.path,
+    query: new URLSearchParams(signatureCase.query),
+    headers: { ...signatureCase.headers },
+    payload: signatureCase.payload,
+    credentialTime: new Date(signatureCase.credentialTime),
+    secretKey: signatureCase.secretKey,
+  };
+}
+
+export const signaturePatterns: SignaturePattern[] = [
+  { name: "base", input: createBasePatternInput() },
+  {
+    name: "method-changed",
+    input: { ...createBasePatternInput(), method: "PUT" },
+  },
+  {
+    name: "path-changed",
+    input: { ...createBasePatternInput(), path: "/v1/messages/1" },
+  },
+  {
+    name: "query-changed",
+    input: {
+      ...createBasePatternInput(),
+      query: new URLSearchParams({
+        ...signatureCase.query,
+        token: "abc124",
+      }),
+    },
+  },
+  {
+    name: "header-value-changed",
+    input: {
+      ...createBasePatternInput(),
+      headers: {
+        ...signatureCase.headers,
+        "X-Request-Id": "req-0002",
+      },
+    },
+  },
+  {
+    name: "payload-changed",
+    input: {
+      ...createBasePatternInput(),
+      payload: '{"message":"hello world"}',
+    },
+  },
+  {
+    name: "credential-time-changed",
+    input: {
+      ...createBasePatternInput(),
+      credentialTime: new Date("2025-01-01T00:00:01.000Z"),
+    },
+  },
+  {
+    name: "secret-key-changed",
+    input: {
+      ...createBasePatternInput(),
+      secretKey: "test-secret-key-2",
+    },
+  },
+  {
+    name: "payload-null",
+    input: {
+      ...createBasePatternInput(),
+      payload: null,
+    },
+  },
+  {
+    name: "query-empty",
+    input: {
+      ...createBasePatternInput(),
+      query: new URLSearchParams(),
+    },
+  },
+];

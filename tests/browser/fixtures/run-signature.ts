@@ -2,47 +2,44 @@ import {
   createSignature as createBrowserSignature,
   verifySignature as verifyBrowserSignature,
 } from "../../../lib/browser/signature";
+import { signaturePatterns } from "../../shared/signature-case";
 
-type BrowserSignatureInput = {
-  method: string;
-  path: string;
-  query?: Record<string, string>;
-  headers: Record<string, string>;
-  payload?: string | null;
-  credentialTime: string;
-  secretKey: string;
-};
+type PatternName = (typeof signaturePatterns)[number]["name"];
 
-type BrowserVerifyInput = BrowserSignatureInput & {
-  signature: string;
-};
+const patternMap = new Map(
+  signaturePatterns.map((pattern) => [pattern.name, pattern.input]),
+);
+
+function getPatternInput(name: PatternName) {
+  const input = patternMap.get(name);
+  if (!input) {
+    throw new Error(`Unknown signature pattern: ${name}`);
+  }
+  return input;
+}
 
 declare global {
   interface Window {
     __browserSignature: {
-      create(
-        input: BrowserSignatureInput,
+      createByName(
+        name: PatternName,
       ): ReturnType<typeof createBrowserSignature>;
-      verify(
-        input: BrowserVerifyInput,
+      verifyByName(
+        name: PatternName,
+        signature: string,
       ): ReturnType<typeof verifyBrowserSignature>;
     };
   }
 }
 
 window.__browserSignature = {
-  create(input) {
-    return createBrowserSignature({
-      ...input,
-      query: new URLSearchParams(input.query),
-      credentialTime: new Date(input.credentialTime),
-    });
+  createByName(name) {
+    return createBrowserSignature(getPatternInput(name));
   },
-  verify(input) {
+  verifyByName(name, signature) {
     return verifyBrowserSignature({
-      ...input,
-      query: new URLSearchParams(input.query),
-      credentialTime: new Date(input.credentialTime),
+      ...getPatternInput(name),
+      signature,
     });
   },
 };
