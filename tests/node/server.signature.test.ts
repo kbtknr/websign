@@ -53,4 +53,20 @@ describe("server signature", () => {
     const unique = new Set(results.map((item) => item.signature));
     expect(unique.size).toBe(results.length);
   });
+
+  it("credentialTime に文字列を渡しても署名の作成と検証が成功する", async () => {
+    const base = signaturePatterns[0].input;
+    const result = await createSignature({
+      ...base,
+      credentialTime: "2025-01-01T00:00:00.000Z",
+    });
+
+    await expect(
+      verifySignature({
+        ...base,
+        credentialTime: "2025-01-01T00:00:00.000Z",
+        signature: result.signature,
+      }),
+    ).resolves.toBe(true);
+  });
 });

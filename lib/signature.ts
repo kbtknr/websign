@@ -13,19 +13,27 @@ import type {
 
 export const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
 
-type ComputeSignatureInput = Omit<SignatureInput, "credentialTime"> & {
-  credentialTime: string;
-};
-
 export type SignatureCrypto = {
   sha256Hex(input: Exclude<PayloadInput, null>): Promise<string> | string;
   hmacSha256Hex(secretKey: string, data: string): Promise<string> | string;
 };
 
+function toCredentialTime(input: string | Date): string {
+  if (typeof input === "string") {
+    return input;
+  }
+  return formatDateTime(input);
+}
+
 export async function computeSignature(
-  params: ComputeSignatureInput,
+  params: SignatureInput,
   crypto: SignatureCrypto,
-): Promise<{ signature: string; signedHeaders: string }> {
+): Promise<{
+  signature: string;
+  signedHeaders: string;
+  credentialTime: string;
+}> {
+  const credentialTime = toCredentialTime(params.credentialTime);
   const { canonicalHeaders, canonicalSignedHeaders } = normalizeHeaders(
     params.headers,
     params.signedHeaders,
@@ -39,7 +47,7 @@ export async function computeSignature(
     params.path,
     normalizedQuery,
     canonicalHeaders,
-    "",
+    "", // Empty line after headers
     canonicalSignedHeaders,
     payloadHash,
   ].join("\n");
@@ -47,24 +55,20 @@ export async function computeSignature(
   const canonicalRequestHash = await crypto.sha256Hex(canonicalRequest);
   const stringToSign = [
     ALGORITHM,
-    params.credentialTime,
+    credentialTime,
     canonicalRequestHash,
   ].join("\n");
   const signature = await crypto.hmacSha256Hex(params.secretKey, stringToSign);
 
-  return { signature, signedHeaders: canonicalSignedHeaders };
+  return { signature, signedHeaders: canonicalSignedHeaders, credentialTime };
 }
 
 export async function createSignature(
   input: SignatureInput,
   crypto: SignatureCrypto,
 ): Promise<SignatureResult> {
-  const credentialTime = formatDateTime(input.credentialTime);
-  const { signature, signedHeaders } = await computeSignature(
-    {
-      ...input,
-      credentialTime,
-    },
+  const { signature, signedHeaders, credentialTime } = await computeSignature(
+    input,
     crypto,
   );
 
@@ -81,13 +85,6 @@ export async function verifySignature(
   crypto: SignatureCrypto,
   compare: (expected: string, actual: string) => boolean | Promise<boolean>,
 ): Promise<boolean> {
-  const credentialTime = formatDateTime(input.credentialTime);
-  const { signature } = await computeSignature(
-    {
-      ...input,
-      credentialTime,
-    },
-    crypto,
-  );
+  const { signature } = await computeSignature(input, crypto);
   return compare(signature, input.signature.toLowerCase());
 }
