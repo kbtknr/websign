@@ -44,19 +44,20 @@ export function normalizeHeaders(
       return;
     }
 
-    const rawValues =
+    const normalizedValues = (
       typeof values === "string"
         ? [normalizeHeaderValue(values)]
-        : values.map((v) => normalizeHeaderValue(v));
-    if (rawValues.length === 0) {
+        : values.map((v) => normalizeHeaderValue(v))
+    ).filter((value) => value.length > 0);
+    if (normalizedValues.length === 0) {
       return;
     }
 
     const current = pairs.get(key);
     if (current) {
-      current.push(...rawValues);
+      current.push(...normalizedValues);
     } else {
-      pairs.set(key, rawValues);
+      pairs.set(key, normalizedValues);
     }
   };
 

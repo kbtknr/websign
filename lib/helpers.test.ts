@@ -27,7 +27,7 @@ describe("helpers", () => {
           "X-B": " second ",
           "X-A": ["first", " third "],
         },
-        ["x-a", "x-b"],
+        ["x-a", "X-B"],
       );
 
       expect(normalized).toEqual({
@@ -58,6 +58,22 @@ describe("helpers", () => {
           "X-B": "b",
         },
         ["x-b"],
+      );
+
+      expect(normalized).toEqual({
+        canonicalHeaders: "x-b:b",
+        canonicalSignedHeaders: "x-b",
+      });
+    });
+
+    it("値が空のヘッダーは無視する", () => {
+      const normalized = normalizeHeaders(
+        {
+          "X-A": "  ",
+          "X-B": ["b", "   "],
+          "X-C": "",
+        },
+        ["x-a", "x-b", "x-c"],
       );
 
       expect(normalized).toEqual({
