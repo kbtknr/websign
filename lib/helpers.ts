@@ -23,35 +23,40 @@ export function normalizeQueryString(params: URLSearchParams): string {
   return pairs.map(([key, value]) => `${key}=${value}`).join("&");
 }
 
-export function normalizeHeaders(headers: NormalizeHeadersInput): string {
+export function normalizeHeaders(
+  headers: NormalizeHeadersInput,
+  signedHeaders: ReadonlyArray<string>,
+): { canonicalHeaders: string; canonicalSignedHeaders: string } {
+  const signedHeaderSet = new Set(
+    signedHeaders.map((name) => name.toLowerCase().trim()).filter(Boolean),
+  );
   const pairs = new Map<string, string[]>();
 
-  const append = (name: string, rawValue: string): void => {
-    const key = name.toLowerCase().trim();
-    if (!key) return;
-
-    const value = normalizeHeaderValue(rawValue);
-    const current = pairs.get(key);
-
-    if (current) {
-      current.push(value);
-      return;
-    }
-
-    pairs.set(key, [value]);
-  };
-
-  const appendValues = (
+  const append = (
     name: string,
-    rawValue: string | ReadonlyArray<string>,
+    values: string | ReadonlyArray<string>,
   ): void => {
-    if (typeof rawValue === "string") {
-      append(name, rawValue);
+    const key = name.toLowerCase().trim();
+    if (!key) {
+      return;
+    }
+    if (signedHeaderSet && !signedHeaderSet.has(key)) {
       return;
     }
 
-    for (const value of rawValue) {
-      append(name, value);
+    const rawValues =
+      typeof values === "string"
+        ? [normalizeHeaderValue(values)]
+        : values.map((v) => normalizeHeaderValue(v));
+    if (rawValues.length === 0) {
+      return;
+    }
+
+    const current = pairs.get(key);
+    if (current) {
+      current.push(...rawValues);
+    } else {
+      pairs.set(key, rawValues);
     }
   };
 
@@ -61,18 +66,24 @@ export function normalizeHeaders(headers: NormalizeHeadersInput): string {
     for (const [name, value] of headers as Iterable<
       [string, string | ReadonlyArray<string>]
     >) {
-      appendValues(name, value);
+      append(name, value);
     }
   } else {
     for (const [name, value] of Object.entries(headers as HeaderRecord)) {
-      appendValues(name, value);
+      append(name, value);
     }
   }
 
-  return [...pairs.entries()]
+  const sortedPairs = [...pairs.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .flatMap(([name, values]) => values.map((value) => `${name}:${value}`))
-    .join("\n");
+    .flatMap(([name, values]) => values.map((value) => `${name}:${value}`));
+
+  return {
+    canonicalHeaders: sortedPairs.join("\n"),
+    canonicalSignedHeaders: [...pairs.keys()]
+      .sort((a, b) => a.localeCompare(b))
+      .join(";"),
+  };
 }
 
 export function formatDateTime(credentialTime: Date): string {

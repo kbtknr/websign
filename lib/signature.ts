@@ -22,21 +22,14 @@ export type SignatureCrypto = {
   hmacSha256Hex(secretKey: string, data: string): Promise<string> | string;
 };
 
-function buildSignedHeaders(normalizedHeaders: string): string {
-  if (!normalizedHeaders) return "";
-  return normalizedHeaders
-    .split("\n")
-    .map((line) => line.split(":")[0])
-    .filter(Boolean)
-    .join(";");
-}
-
 export async function computeSignature(
   params: ComputeSignatureInput,
   crypto: SignatureCrypto,
 ): Promise<{ signature: string; signedHeaders: string }> {
-  const normalizedHeaders = normalizeHeaders(params.headers);
-  const signedHeaders = buildSignedHeaders(normalizedHeaders);
+  const { canonicalHeaders, canonicalSignedHeaders } = normalizeHeaders(
+    params.headers,
+    params.signedHeaders,
+  );
   const normalizedQuery = normalizeQueryString(
     params.query ?? new URLSearchParams(),
   );
@@ -45,9 +38,9 @@ export async function computeSignature(
     params.method.toUpperCase(),
     params.path,
     normalizedQuery,
-    normalizedHeaders,
+    canonicalHeaders,
     "",
-    signedHeaders,
+    canonicalSignedHeaders,
     payloadHash,
   ].join("\n");
 
@@ -59,7 +52,7 @@ export async function computeSignature(
   ].join("\n");
   const signature = await crypto.hmacSha256Hex(params.secretKey, stringToSign);
 
-  return { signature, signedHeaders };
+  return { signature, signedHeaders: canonicalSignedHeaders };
 }
 
 export async function createSignature(

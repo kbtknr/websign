@@ -22,21 +22,48 @@ describe("helpers", () => {
 
   describe("normalizeHeaders", () => {
     it("ヘッダー名を小文字化してソートし、同名は行を分ける", () => {
-      const normalized = normalizeHeaders({
-        "X-B": " second ",
-        "X-A": ["first", " third "],
-      });
+      const normalized = normalizeHeaders(
+        {
+          "X-B": " second ",
+          "X-A": ["first", " third "],
+        },
+        ["x-a", "x-b"],
+      );
 
-      expect(normalized).toBe("x-a:first\nx-a:third\nx-b:second");
+      expect(normalized).toEqual({
+        canonicalHeaders: "x-a:first\nx-a:third\nx-b:second",
+        canonicalSignedHeaders: "x-a;x-b",
+      });
     });
 
     it("Iterable入力でも配列値を展開する", () => {
-      const normalized = normalizeHeaders([
-        ["X-Test", ["a", "b"]],
-        ["X-Test", "c"],
-      ]);
+      const normalized = normalizeHeaders(
+        [
+          ["X-Test", ["a", "b"]],
+          ["X-Test", "c"],
+        ],
+        ["x-test"],
+      );
 
-      expect(normalized).toBe("x-test:a\nx-test:b\nx-test:c");
+      expect(normalized).toEqual({
+        canonicalHeaders: "x-test:a\nx-test:b\nx-test:c",
+        canonicalSignedHeaders: "x-test",
+      });
+    });
+
+    it("signedHeaders で署名対象ヘッダーを絞り込める", () => {
+      const normalized = normalizeHeaders(
+        {
+          "X-A": "a",
+          "X-B": "b",
+        },
+        ["x-b"],
+      );
+
+      expect(normalized).toEqual({
+        canonicalHeaders: "x-b:b",
+        canonicalSignedHeaders: "x-b",
+      });
     });
   });
 

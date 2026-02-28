@@ -14,6 +14,7 @@ export interface SignatureInput<TPayload = PayloadInput> {
   path: string;
   query?: URLSearchParams;
   headers: NormalizeHeadersInput;
+  signedHeaders: ReadonlyArray<string>;
   payload?: TPayload;
   credentialTime: Date;
   secretKey: string;
