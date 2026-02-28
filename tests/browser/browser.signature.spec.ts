@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { createSignature as createServerSignature } from "../../lib/server/signature";
+import {
+  createSignature as createServerSignature,
+  verifySignature as verifyServerSignature,
+} from "../../lib/server/signature";
 import { signaturePatterns } from "../shared/signature-case";
 
 test.describe("browser signature", () => {
@@ -57,6 +60,22 @@ test.describe("browser signature", () => {
           `verify should fail: ${expected.name} -> ${actual.name}`,
         ).toBe(false);
       }
+    }
+  });
+
+  test("ブラウザ署名をサーバで検証できる", async ({ page }) => {
+    for (const { name, input } of signaturePatterns) {
+      const browserResult = await page.evaluate(async (value) => {
+        return window.__browserSignature.createByName(value);
+      }, name);
+
+      await expect(
+        verifyServerSignature({
+          ...input,
+          signature: browserResult.signature,
+        }),
+        `server verify failed: ${name}`,
+      ).resolves.toBe(true);
     }
   });
 });
