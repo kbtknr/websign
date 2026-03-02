@@ -78,6 +78,31 @@ describe("server signature", () => {
         ...base,
         credentialTime: "2025-01-01T00:00:00.000Z",
       }),
-    ).rejects.toThrow("Invalid credentialTime format. Expected YYYYMMDDTHHmmssZ.");
+    ).rejects.toThrow(
+      "Invalid credentialTime format. Expected YYYYMMDDTHHmmssZ.",
+    );
+  });
+
+  it("必須署名ヘッダーが signedHeaders にない場合は失敗する", async () => {
+    const base = signaturePatterns[0].input;
+    await expect(
+      createSignature({
+        ...base,
+        signedHeaders: ["x-request-id"],
+      }),
+    ).rejects.toThrow("Missing required header values: content-type,host.");
+  });
+
+  it("必須署名ヘッダーの値が空の場合は失敗する", async () => {
+    const base = signaturePatterns[0].input;
+    await expect(
+      createSignature({
+        ...base,
+        headers: {
+          ...(base.headers as Record<string, string>),
+          Host: "   ",
+        },
+      }),
+    ).rejects.toThrow("Missing required header values: host.");
   });
 });

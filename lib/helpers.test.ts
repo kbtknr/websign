@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatDateTime,
-  normalizeHeaders,
+  normalizeAndValidateHeaders,
   normalizeQueryString,
   parseDateTime,
 } from "./helpers";
@@ -18,16 +18,34 @@ describe("helpers", () => {
         "a=b%20c&a=d&z%20key=value%2F1",
       );
     });
+
+    it("同一キーの value 順序を維持する", () => {
+      const params = new URLSearchParams();
+      params.append("a", "2");
+      params.append("a", "1");
+
+      expect(normalizeQueryString(params)).toBe("a=2&a=1");
+    });
+
+    it("キーはコードポイント順でソートする", () => {
+      const params = new URLSearchParams();
+      params.append("あ", "1");
+      params.append("a", "2");
+      params.append("ア", "3");
+
+      expect(normalizeQueryString(params)).toBe("a=2&%E3%81%82=1&%E3%82%A2=3");
+    });
   });
 
-  describe("normalizeHeaders", () => {
+  describe("normalizeAndValidateHeaders", () => {
     it("ヘッダー名を小文字化してソートし、同名は行を分ける", () => {
-      const normalized = normalizeHeaders(
+      const normalized = normalizeAndValidateHeaders(
         {
           "X-B": " second ",
           "X-A": ["first", " third "],
         },
         ["x-a", "X-B"],
+        [],
       );
 
       expect(normalized).toEqual({
@@ -37,12 +55,13 @@ describe("helpers", () => {
     });
 
     it("Iterable入力でも配列値を展開する", () => {
-      const normalized = normalizeHeaders(
+      const normalized = normalizeAndValidateHeaders(
         [
           ["X-Test", ["a", "b"]],
           ["X-Test", "c"],
         ],
         ["x-test"],
+        [],
       );
 
       expect(normalized).toEqual({
@@ -52,12 +71,13 @@ describe("helpers", () => {
     });
 
     it("signedHeaders で署名対象ヘッダーを絞り込める", () => {
-      const normalized = normalizeHeaders(
+      const normalized = normalizeAndValidateHeaders(
         {
           "X-A": "a",
           "X-B": "b",
         },
         ["x-b"],
+        [],
       );
 
       expect(normalized).toEqual({
@@ -67,19 +87,60 @@ describe("helpers", () => {
     });
 
     it("値が空のヘッダーは無視する", () => {
-      const normalized = normalizeHeaders(
+      const normalized = normalizeAndValidateHeaders(
         {
           "X-A": "  ",
           "X-B": ["b", "   "],
           "X-C": "",
         },
         ["x-a", "x-b", "x-c"],
+        [],
       );
 
       expect(normalized).toEqual({
         canonicalHeaders: "x-b:b",
         canonicalSignedHeaders: "x-b",
       });
+    });
+
+    it("ヘッダー値の連続空白は1つに正規化する", () => {
+      const normalized = normalizeAndValidateHeaders(
+        {
+          "X-A": "  a \t\t b   c  ",
+        },
+        ["x-a"],
+        [],
+      );
+
+      expect(normalized).toEqual({
+        canonicalHeaders: "x-a:a b c",
+        canonicalSignedHeaders: "x-a",
+      });
+    });
+
+    it("必須署名ヘッダーが signedHeaders にない場合は失敗する", () => {
+      expect(() =>
+        normalizeAndValidateHeaders(
+          {
+            "X-Request-Id": "req-0001",
+          },
+          ["x-request-id"],
+          ["host", "content-type"],
+        ),
+      ).toThrow("Missing required header values: host,content-type.");
+    });
+
+    it("必須署名ヘッダー値が空の場合は失敗する", () => {
+      expect(() =>
+        normalizeAndValidateHeaders(
+          {
+            Host: "   ",
+            "Content-Type": "application/json",
+          },
+          ["host", "content-type"],
+          ["host", "content-type"],
+        ),
+      ).toThrow("Missing required header values: host.");
     });
   });
 

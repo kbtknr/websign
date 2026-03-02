@@ -22,10 +22,11 @@ export const signatureCase: SignatureCase = {
     token: "abc123",
   },
   headers: {
+    Host: "api.example.com",
     "Content-Type": "application/json",
     "X-Request-Id": "req-0001",
   },
-  signedHeaders: ["content-type", "x-request-id"],
+  signedHeaders: ["host", "content-type", "x-request-id"],
   payload: '{"message":"hello"}',
   credentialTime: "2025-01-01T00:00:00.000Z",
   serviceScope: "messaging/v1",

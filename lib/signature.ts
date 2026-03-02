@@ -1,6 +1,6 @@
 import {
   formatDateTime,
-  normalizeHeaders,
+  normalizeAndValidateHeaders,
   parseDateTime,
   normalizeQueryString,
 } from "./helpers";
@@ -13,6 +13,7 @@ import type {
 } from "./types";
 
 export const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
+export const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
 const SECRET_KEY_PREFIX = "WebSignature";
 const SIGNING_KEY_APPEND = "websignature_request";
 
@@ -47,10 +48,14 @@ export async function computeSignature(
   credentialTime: string;
 }> {
   const credentialTime = toCredentialTime(params.credentialTime);
-  const { canonicalHeaders, canonicalSignedHeaders } = normalizeHeaders(
-    params.headers,
-    params.signedHeaders,
-  );
+
+  const { canonicalHeaders, canonicalSignedHeaders } =
+    normalizeAndValidateHeaders(
+      params.headers,
+      params.signedHeaders,
+      REQUIRED_SIGNED_HEADERS,
+    );
+
   const normalizedQuery = normalizeQueryString(
     params.query ?? new URLSearchParams(),
   );

@@ -7,40 +7,88 @@ function encodeRfc3986(value: string): string {
   );
 }
 
+function compareByCodePoint(a: string, b: string): number {
+  const aChars = [...a];
+  const bChars = [...b];
+  const len = Math.min(aChars.length, bChars.length);
+
+  for (let i = 0; i < len; i += 1) {
+    const aCodePoint = aChars[i].codePointAt(0) ?? 0;
+    const bCodePoint = bChars[i].codePointAt(0) ?? 0;
+    if (aCodePoint !== bCodePoint) {
+      return aCodePoint - bCodePoint;
+    }
+  }
+
+  return aChars.length - bChars.length;
+}
+
+export function normalizeHeaderName(headerName: string): string {
+  return headerName.toLowerCase().trim();
+}
+
 function normalizeHeaderValue(value: string): string {
-  return value.trim();
+  return value.trim().replace(/\s+/g, " ");
 }
 
 export function normalizeQueryString(params: URLSearchParams): string {
-  const pairs: Array<[string, string]> = [];
+  const grouped = new Map<string, { encodedKey: string; values: string[] }>();
 
   for (const [key, value] of params.entries()) {
-    pairs.push([encodeRfc3986(key), encodeRfc3986(value)]);
+    const existing = grouped.get(key);
+    const encodedValue = encodeRfc3986(value);
+    if (existing) {
+      existing.values.push(encodedValue);
+      continue;
+    }
+
+    grouped.set(key, {
+      encodedKey: encodeRfc3986(key),
+      values: [encodedValue],
+    });
   }
 
-  pairs.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+  const sortedKeys = [...grouped.keys()].sort(compareByCodePoint);
 
-  return pairs.map(([key, value]) => `${key}=${value}`).join("&");
+  return sortedKeys
+    .flatMap((key) => {
+      const entry = grouped.get(key);
+      if (!entry) {
+        return [];
+      }
+      return entry.values.map((value) => `${entry.encodedKey}=${value}`);
+    })
+    .join("&");
 }
 
-export function normalizeHeaders(
+export function normalizeAndValidateHeaders(
   headers: NormalizeHeadersInput,
   signedHeaders: ReadonlyArray<string>,
-): { canonicalHeaders: string; canonicalSignedHeaders: string } {
+  requiredSignedHeaders: ReadonlyArray<string>,
+): {
+  canonicalHeaders: string;
+  canonicalSignedHeaders: string;
+} {
   const signedHeaderSet = new Set(
-    signedHeaders.map((name) => name.toLowerCase().trim()).filter(Boolean),
+    signedHeaders.map((name) => normalizeHeaderName(name)).filter(Boolean),
   );
+  const requiredHeaderSet = new Set(
+    requiredSignedHeaders
+      .map((headerName) => normalizeHeaderName(headerName))
+      .filter(Boolean),
+  );
+
   const pairs = new Map<string, string[]>();
 
   const append = (
     name: string,
     values: string | ReadonlyArray<string>,
   ): void => {
-    const key = name.toLowerCase().trim();
+    const key = normalizeHeaderName(name);
     if (!key) {
       return;
     }
-    if (signedHeaderSet && !signedHeaderSet.has(key)) {
+    if (!signedHeaderSet.has(key)) {
       return;
     }
 
@@ -76,14 +124,26 @@ export function normalizeHeaders(
   }
 
   const sortedPairs = [...pairs.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => compareByCodePoint(a, b))
     .flatMap(([name, values]) => values.map((value) => `${name}:${value}`));
+
+  const canonicalSignedHeaders = [...pairs.keys()]
+    .sort(compareByCodePoint)
+    .join(";");
+
+  const canonicalHeaderSet = new Set(pairs.keys());
+  const missingCanonicalHeaders = [...requiredHeaderSet].filter(
+    (headerName) => !canonicalHeaderSet.has(headerName),
+  );
+  if (missingCanonicalHeaders.length > 0) {
+    throw new Error(
+      `Missing required header values: ${missingCanonicalHeaders.join(",")}.`,
+    );
+  }
 
   return {
     canonicalHeaders: sortedPairs.join("\n"),
-    canonicalSignedHeaders: [...pairs.keys()]
-      .sort((a, b) => a.localeCompare(b))
-      .join(";"),
+    canonicalSignedHeaders,
   };
 }
 
