@@ -56,17 +56,28 @@ describe("server signature", () => {
 
   it("credentialTime に文字列を渡しても署名の作成と検証が成功する", async () => {
     const base = signaturePatterns[0].input;
+    const credentialTime = "20250101T000000Z";
     const result = await createSignature({
       ...base,
-      credentialTime: "2025-01-01T00:00:00.000Z",
+      credentialTime,
     });
 
     await expect(
       verifySignature({
         ...base,
-        credentialTime: "2025-01-01T00:00:00.000Z",
+        credentialTime,
         signature: result.signature,
       }),
     ).resolves.toBe(true);
+  });
+
+  it("credentialTime 文字列の書式が不正な場合は失敗する", async () => {
+    const base = signaturePatterns[0].input;
+    await expect(
+      createSignature({
+        ...base,
+        credentialTime: "2025-01-01T00:00:00.000Z",
+      }),
+    ).rejects.toThrow("Invalid credentialTime format. Expected YYYYMMDDTHHmmssZ.");
   });
 });

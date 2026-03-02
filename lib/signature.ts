@@ -1,6 +1,7 @@
 import {
   formatDateTime,
   normalizeHeaders,
+  parseDateTime,
   normalizeQueryString,
 } from "./helpers";
 import type {
@@ -25,6 +26,7 @@ export type SignatureCrypto = {
 
 function toCredentialTime(input: string | Date): string {
   if (typeof input === "string") {
+    parseDateTime(input);
     return input;
   }
   return formatDateTime(input);
