@@ -12,6 +12,8 @@ import type {
 } from "./types";
 
 export const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
+const SECRET_KEY_PREFIX = "WebSignature";
+const SIGNING_KEY_APPEND = "websignature_request";
 
 export type SignatureCrypto = {
   sha256Hex(input: Exclude<PayloadInput, null>): Promise<string> | string;
@@ -65,11 +67,25 @@ export async function computeSignature(
   const stringToSign = [
     ALGORITHM,
     credentialTime,
+    params.serviceScope,
     canonicalRequestHash,
   ].join("\n");
-  const secretKey = new TextEncoder().encode(params.secretKey);
+
+  let signingKey = new TextEncoder().encode(
+    SECRET_KEY_PREFIX + params.secretKey,
+  );
+  const signingKeyParts = [
+    credentialTime,
+    ...params.serviceScope.split("/").reverse(),
+    SIGNING_KEY_APPEND,
+  ];
+  for (const part of signingKeyParts) {
+    const partKey = new TextEncoder().encode(part);
+    signingKey = new Uint8Array(await crypto.hmacSha256(signingKey, partKey));
+  }
+
   const data = new TextEncoder().encode(stringToSign);
-  const signatureBytes = await crypto.hmacSha256(secretKey, data);
+  const signatureBytes = await crypto.hmacSha256(signingKey, data);
   const signature = toHex(signatureBytes);
 
   return { signature, signedHeaders: canonicalSignedHeaders, credentialTime };

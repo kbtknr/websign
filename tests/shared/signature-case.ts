@@ -9,6 +9,7 @@ export type SignatureCase = {
   signedHeaders: ReadonlyArray<string>;
   payload?: string | null;
   credentialTime: string;
+  serviceScope: string;
   secretKey: string;
 };
 
@@ -27,6 +28,7 @@ export const signatureCase: SignatureCase = {
   signedHeaders: ["content-type", "x-request-id"],
   payload: '{"message":"hello"}',
   credentialTime: "2025-01-01T00:00:00.000Z",
+  serviceScope: "messaging/v1",
   secretKey: "test-secret-key",
 };
 
@@ -44,6 +46,7 @@ function createBasePatternInput(): SignatureInput {
     signedHeaders: signatureCase.signedHeaders,
     payload: signatureCase.payload,
     credentialTime: new Date(signatureCase.credentialTime),
+    serviceScope: signatureCase.serviceScope,
     secretKey: signatureCase.secretKey,
   };
 }

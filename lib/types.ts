@@ -17,6 +17,7 @@ export interface SignatureInput<TPayload = PayloadInput> {
   signedHeaders: ReadonlyArray<string>;
   payload?: TPayload;
   credentialTime: string | Date;
+  serviceScope: string;
   secretKey: string;
 }
 
