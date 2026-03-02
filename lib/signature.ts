@@ -15,7 +15,10 @@ export const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
 
 export type SignatureCrypto = {
   sha256Hex(input: Exclude<PayloadInput, null>): Promise<string> | string;
-  hmacSha256Hex(secretKey: string, data: string): Promise<string> | string;
+  hmacSha256(
+    secretKey: Uint8Array,
+    data: Uint8Array,
+  ): Promise<Uint8Array> | Uint8Array;
 };
 
 function toCredentialTime(input: string | Date): string {
@@ -23,6 +26,12 @@ function toCredentialTime(input: string | Date): string {
     return input;
   }
   return formatDateTime(input);
+}
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 export async function computeSignature(
@@ -58,7 +67,10 @@ export async function computeSignature(
     credentialTime,
     canonicalRequestHash,
   ].join("\n");
-  const signature = await crypto.hmacSha256Hex(params.secretKey, stringToSign);
+  const secretKey = new TextEncoder().encode(params.secretKey);
+  const data = new TextEncoder().encode(stringToSign);
+  const signatureBytes = await crypto.hmacSha256(secretKey, data);
+  const signature = toHex(signatureBytes);
 
   return { signature, signedHeaders: canonicalSignedHeaders, credentialTime };
 }

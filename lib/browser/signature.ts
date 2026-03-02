@@ -45,7 +45,10 @@ async function sha256Hex(
   return toHex(digest);
 }
 
-async function hmacSha256Hex(secretKey: string, data: string): Promise<string> {
+async function hmacSha256(
+  secretKey: Uint8Array,
+  data: Uint8Array,
+): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
     toBytes(secretKey),
@@ -54,12 +57,12 @@ async function hmacSha256Hex(secretKey: string, data: string): Promise<string> {
     ["sign"],
   );
   const signature = await crypto.subtle.sign("HMAC", key, toBytes(data));
-  return toHex(signature);
+  return new Uint8Array(signature);
 }
 
 const cryptoImpl = {
   sha256Hex,
-  hmacSha256Hex,
+  hmacSha256,
 };
 
 async function normalizePayload(

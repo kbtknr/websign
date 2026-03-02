@@ -23,15 +23,13 @@ function sha256Hex(input: string | ArrayBuffer | Uint8Array): string {
   return createHash("sha256").update(toBuffer(input)).digest("hex");
 }
 
-function hmacSha256Hex(secretKey: string, data: string): string {
-  return createHmac("sha256", Buffer.from(secretKey, "utf8"))
-    .update(data, "utf8")
-    .digest("hex");
+function hmacSha256(secretKey: Uint8Array, data: Uint8Array): Uint8Array {
+  return createHmac("sha256", Buffer.from(secretKey)).update(data).digest();
 }
 
 const cryptoImpl = {
   sha256Hex,
-  hmacSha256Hex,
+  hmacSha256,
 };
 
 function timingSafeEqualHex(
