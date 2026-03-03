@@ -4,10 +4,7 @@ import type {
   SignatureInput,
   VerifySignatureInput,
 } from "../types";
-import {
-  createSignature as createSignatureBase,
-  verifySignature as verifySignatureBase,
-} from "../signature";
+import { createSignatureBase, verifySignatureBase } from "../signature";
 
 function toBuffer(input: Exclude<PayloadInput, null>): Buffer {
   if (typeof input === "string") {

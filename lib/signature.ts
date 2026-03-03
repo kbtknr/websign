@@ -98,7 +98,7 @@ export async function computeSignature(
   return { signature, signedHeaders: canonicalSignedHeaders, credentialTime };
 }
 
-export async function createSignature(
+export async function createSignatureBase(
   input: SignatureInput,
   crypto: SignatureCrypto,
 ): Promise<SignatureResult> {
@@ -115,7 +115,7 @@ export async function createSignature(
   };
 }
 
-export async function verifySignature(
+export async function verifySignatureBase(
   input: VerifySignatureInput,
   crypto: SignatureCrypto,
   compare: (expected: string, actual: string) => boolean | Promise<boolean>,

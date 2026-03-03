@@ -3,10 +3,7 @@ import type {
   SignatureInput,
   VerifySignatureInput,
 } from "../types";
-import {
-  createSignature as createSignatureBase,
-  verifySignature as verifySignatureBase,
-} from "../signature";
+import { createSignatureBase, verifySignatureBase } from "../signature";
 
 export type BrowserPayloadInput =
   | string
