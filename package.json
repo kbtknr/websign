@@ -1,8 +1,14 @@
 {
-  "name": "web-signature",
+  "name": "websign",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Request signature utilities for Web APIs in Node.js and modern browsers.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kbtknr/web-sig.git"
+  },
   "main": "./dist/node/index.cjs",
   "module": "./dist/node/index.js",
   "types": "./dist/types.d.ts",
@@ -29,7 +35,15 @@
     },
     "./types": "./dist/types.d.ts"
   },
-  "description": "Web API request signature utilities for browser and Node.js.",
+  "keywords": [
+    "webapi",
+    "signature",
+    "hmac",
+    "sha256",
+    "security",
+    "node",
+    "browser"
+  ],
   "scripts": {
     "build": "tsup",
     "prepack": "npm run build",
@@ -62,6 +76,5 @@
   "files": [
     "dist",
     "README.md"
-  ],
-  "license": "UNLICENSED"
+  ]
 }
