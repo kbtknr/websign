@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "types": "./lib/types.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types.ts",
+      "browser": "./lib/browser/index.ts",
+      "node": "./lib/node/index.ts",
+      "default": "./lib/node/index.ts"
+    },
+    "./browser": "./lib/browser/index.ts",
+    "./node": "./lib/node/index.ts",
+    "./types": "./lib/types.ts"
+  },
   "description": "Web API request signature utilities for browser and Node.js.",
   "scripts": {
     "lint": "npm run lint:eslint && npm run lint:prettier && npm run lint:tsc",
