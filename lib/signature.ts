@@ -12,12 +12,12 @@ import type {
   VerifySignatureInput,
 } from "./types";
 
-export const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
-export const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
+const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
+const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
 const SECRET_KEY_PREFIX = "WebSignature";
 const SIGNING_KEY_APPEND = "websignature_request";
 
-export type SignatureCrypto = {
+type SignatureCrypto = {
   sha256Hex(input: Exclude<PayloadInput, null>): Promise<string> | string;
   hmacSha256(
     secretKey: Uint8Array,
@@ -39,7 +39,7 @@ function toHex(bytes: Uint8Array): string {
   );
 }
 
-export async function computeSignature(
+async function computeSignature(
   params: SignatureInput,
   crypto: SignatureCrypto,
 ): Promise<{

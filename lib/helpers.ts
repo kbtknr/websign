@@ -1,12 +1,5 @@
 import type { HeaderRecord, NormalizeHeadersInput } from "./types";
 
-function encodeRfc3986(value: string): string {
-  return encodeURIComponent(value).replace(
-    /[!'()*]/g,
-    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-  );
-}
-
 function compareByCodePoint(a: string, b: string): number {
   const aChars = [...a];
   const bChars = [...b];
@@ -23,12 +16,11 @@ function compareByCodePoint(a: string, b: string): number {
   return aChars.length - bChars.length;
 }
 
-export function normalizeHeaderName(headerName: string): string {
-  return headerName.toLowerCase().trim();
-}
-
-function normalizeHeaderValue(value: string): string {
-  return value.trim().replace(/\s+/g, " ");
+function encodeRfc3986(value: string): string {
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 
 export function normalizeQueryString(params: URLSearchParams): string {
@@ -59,6 +51,14 @@ export function normalizeQueryString(params: URLSearchParams): string {
       return entry.values.map((value) => `${entry.encodedKey}=${value}`);
     })
     .join("&");
+}
+
+function normalizeHeaderName(headerName: string): string {
+  return headerName.toLowerCase().trim();
+}
+
+function normalizeHeaderValue(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
 }
 
 export function normalizeAndValidateHeaders(
