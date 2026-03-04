@@ -16,6 +16,7 @@ const ALGORITHM: SignatureAlgorithm = "HMAC-SHA256";
 const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
 const SECRET_KEY_PREFIX = "WebSignature";
 const SIGNING_KEY_APPEND = "websignature_request";
+const textEncoder = new TextEncoder();
 
 type SignatureCrypto = {
   sha256Hex(input: Exclude<PayloadInput, null>): Promise<string> | string;
@@ -37,6 +38,25 @@ function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
     "",
   );
+}
+
+function concatBytes(left: Uint8Array, right: Uint8Array): Uint8Array {
+  const merged = new Uint8Array(left.byteLength + right.byteLength);
+  merged.set(left);
+  merged.set(right, left.byteLength);
+  return merged;
+}
+
+function toSecretKeyBytes(secretKey: SignatureInput["secretKey"]): Uint8Array {
+  if (typeof secretKey === "string") {
+    return textEncoder.encode(SECRET_KEY_PREFIX + secretKey);
+  }
+
+  const prefixBytes = textEncoder.encode(SECRET_KEY_PREFIX);
+  if (secretKey instanceof Uint8Array) {
+    return concatBytes(prefixBytes, secretKey);
+  }
+  return concatBytes(prefixBytes, new Uint8Array(secretKey));
 }
 
 async function computeSignature(
@@ -78,20 +98,18 @@ async function computeSignature(
     canonicalRequestHash,
   ].join("\n");
 
-  let signingKey = new TextEncoder().encode(
-    SECRET_KEY_PREFIX + params.secretKey,
-  );
+  let signingKey = toSecretKeyBytes(params.secretKey);
   const signingKeyParts = [
     credentialTime,
     ...params.serviceScope.split("/").reverse(),
     SIGNING_KEY_APPEND,
   ];
   for (const part of signingKeyParts) {
-    const partKey = new TextEncoder().encode(part);
+    const partKey = textEncoder.encode(part);
     signingKey = new Uint8Array(await crypto.hmacSha256(signingKey, partKey));
   }
 
-  const data = new TextEncoder().encode(stringToSign);
+  const data = textEncoder.encode(stringToSign);
   const signatureBytes = await crypto.hmacSha256(signingKey, data);
   const signature = toHex(signatureBytes);
 

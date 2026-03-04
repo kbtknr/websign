@@ -83,6 +83,40 @@ describe("server signature", () => {
     );
   });
 
+  it("secretKey に Uint8Array / ArrayBuffer を渡しても署名の作成と検証が成功する", async () => {
+    const base = signaturePatterns[0].input;
+    const raw = new TextEncoder().encode("test-secret-key");
+    const asArrayBuffer = raw.buffer.slice(
+      raw.byteOffset,
+      raw.byteOffset + raw.byteLength,
+    );
+
+    const resultByUint8Array = await createSignature({
+      ...base,
+      secretKey: raw,
+    });
+    const resultByArrayBuffer = await createSignature({
+      ...base,
+      secretKey: asArrayBuffer,
+    });
+
+    await expect(
+      verifySignature({
+        ...base,
+        secretKey: raw,
+        signature: resultByUint8Array.signature,
+      }),
+    ).resolves.toBe(true);
+    await expect(
+      verifySignature({
+        ...base,
+        secretKey: asArrayBuffer,
+        signature: resultByArrayBuffer.signature,
+      }),
+    ).resolves.toBe(true);
+    expect(resultByUint8Array.signature).toBe(resultByArrayBuffer.signature);
+  });
+
   it("必須署名ヘッダーが signedHeaders にない場合は失敗する", async () => {
     const base = signaturePatterns[0].input;
     await expect(

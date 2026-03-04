@@ -18,7 +18,7 @@ export interface SignatureInput<TPayload = PayloadInput> {
   payload?: TPayload;
   credentialTime: string | Date;
   serviceScope: string;
-  secretKey: string;
+  secretKey: string | ArrayBuffer | Uint8Array;
 }
 
 export interface VerifySignatureInput<
