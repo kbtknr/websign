@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   createSignature as createServerSignature,
   verifySignature as verifyServerSignature,
-} from "../../lib/server/signature";
+} from "../../lib/node/signature";
 import { signaturePatterns } from "../shared/signature-case";
 
 test.describe("browser signature", () => {

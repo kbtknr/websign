@@ -35,7 +35,7 @@ export default [
     },
   },
   {
-    files: ["lib/server/**/*.ts"],
+    files: ["lib/node/**/*.ts"],
     languageOptions: {
       globals: {
         ...globals.node,

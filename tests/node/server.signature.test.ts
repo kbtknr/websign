@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSignature, verifySignature } from "../../lib/server/signature";
+import { createSignature, verifySignature } from "../../lib/node/signature";
 import { signaturePatterns } from "../shared/signature-case";
 
 describe("server signature", () => {
