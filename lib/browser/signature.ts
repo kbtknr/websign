@@ -1,6 +1,6 @@
 import type {
+  CreateSignatureInput,
   PayloadInput,
-  SignatureInput,
   VerifySignatureInput,
 } from "../types";
 import { createSignatureBase, verifySignatureBase } from "../signature";
@@ -106,7 +106,7 @@ function timingSafeEqualHex(left: string, right: string): boolean {
 }
 
 export async function createSignature(
-  input: SignatureInput<BrowserPayloadInput>,
+  input: CreateSignatureInput<BrowserPayloadInput>,
 ) {
   const payload = await normalizePayload(input.payload);
   return createSignatureBase({ ...input, payload }, cryptoImpl);

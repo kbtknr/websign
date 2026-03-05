@@ -22,6 +22,7 @@ npm install websign
 import { createSignature, verifySignature } from "websign";
 
 const request = {
+  algorithm: "HMAC-SHA256",
   method: "POST",
   path: "/v1/messages",
   query: new URLSearchParams({ q: "hello" }),
@@ -40,7 +41,16 @@ const request = {
 const signatureResult = await createSignature(request);
 
 const ok = await verifySignature({
-  ...request,
+  method: request.method,
+  path: request.path,
+  query: request.query,
+  headers: request.headers,
+  signedHeaders: request.signedHeaders,
+  payload: request.payload,
+  credentialTime: request.credentialTime,
+  serviceScope: request.serviceScope,
+  algorithm: request.algorithm,
+  secretKey: request.secretKey,
   signature: signatureResult.signature,
 });
 

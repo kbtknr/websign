@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type {
+  CreateSignatureInput,
   PayloadInput,
-  SignatureInput,
   VerifySignatureInput,
 } from "../types";
 import { createSignatureBase, verifySignatureBase } from "../signature";
@@ -42,7 +42,7 @@ function timingSafeEqualHex(
   return timingSafeEqual(expected, actual);
 }
 
-export async function createSignature(input: SignatureInput) {
+export async function createSignature(input: CreateSignatureInput) {
   return createSignatureBase(input, cryptoImpl);
 }
 

@@ -1,4 +1,4 @@
-import type { SignatureInput } from "../../lib/types";
+import type { CreateSignatureInput } from "../../lib/types";
 
 export type SignatureCase = {
   name: string;
@@ -35,11 +35,12 @@ export const signatureCase: SignatureCase = {
 
 export type SignaturePattern = {
   name: string;
-  input: SignatureInput;
+  input: CreateSignatureInput;
 };
 
-function createBasePatternInput(): SignatureInput {
+function createBasePatternInput(): CreateSignatureInput {
   return {
+    algorithm: "HMAC-SHA256",
     method: signatureCase.method,
     path: signatureCase.path,
     query: new URLSearchParams(signatureCase.query),

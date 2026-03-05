@@ -37,8 +37,9 @@ window.__browserSignature = {
     return createBrowserSignature(getPatternInput(name));
   },
   verifyByName(name, signature) {
+    const input = getPatternInput(name);
     return verifyBrowserSignature({
-      ...getPatternInput(name),
+      ...input,
       signature,
     });
   },

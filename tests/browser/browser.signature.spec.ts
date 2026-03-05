@@ -21,6 +21,9 @@ test.describe("browser signature", () => {
       expect(browserResult.signature, `signature mismatch: ${name}`).toBe(
         serverResult.signature,
       );
+      expect(browserResult.algorithm, `algorithm mismatch: ${name}`).toBe(
+        serverResult.algorithm,
+      );
       expect(
         browserResult.signedHeaders,
         `signedHeaders mismatch: ${name}`,

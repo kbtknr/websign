@@ -5,9 +5,11 @@ import {
   normalizeQueryString,
 } from "./helpers";
 import type {
+  CanonicalRequestInput,
+  CreateSignatureInput,
   PayloadInput,
+  SecretKeyInput,
   SignatureAlgorithm,
-  SignatureInput,
   SignatureResult,
   VerifySignatureInput,
 } from "./types";
@@ -47,7 +49,7 @@ function concatBytes(left: Uint8Array, right: Uint8Array): Uint8Array {
   return merged;
 }
 
-function toSecretKeyBytes(secretKey: SignatureInput["secretKey"]): Uint8Array {
+function toSecretKeyBytes(secretKey: SecretKeyInput): Uint8Array {
   if (typeof secretKey === "string") {
     return textEncoder.encode(SECRET_KEY_PREFIX + secretKey);
   }
@@ -60,7 +62,9 @@ function toSecretKeyBytes(secretKey: SignatureInput["secretKey"]): Uint8Array {
 }
 
 async function computeSignature(
-  params: SignatureInput,
+  params: CanonicalRequestInput & {
+    secretKey: SecretKeyInput;
+  },
   crypto: SignatureCrypto,
 ): Promise<{
   signature: string;
@@ -117,9 +121,13 @@ async function computeSignature(
 }
 
 export async function createSignatureBase(
-  input: SignatureInput,
+  input: CreateSignatureInput,
   crypto: SignatureCrypto,
 ): Promise<SignatureResult> {
+  if (input.algorithm !== ALGORITHM) {
+    throw new Error(`Unsupported algorithm: ${input.algorithm}.`);
+  }
+
   const { signature, signedHeaders, credentialTime } = await computeSignature(
     input,
     crypto,
@@ -138,6 +146,13 @@ export async function verifySignatureBase(
   crypto: SignatureCrypto,
   compare: (expected: string, actual: string) => boolean | Promise<boolean>,
 ): Promise<boolean> {
-  const { signature } = await computeSignature(input, crypto);
+  if (input.algorithm !== ALGORITHM) {
+    return false;
+  }
+
+  const { signature } = await computeSignature(
+    { ...input, secretKey: input.secretKey },
+    crypto,
+  );
   return compare(signature, input.signature.toLowerCase());
 }

@@ -6,10 +6,11 @@ export type NormalizeHeadersInput =
   | Iterable<[string, string | ReadonlyArray<string>]>;
 
 export type PayloadInput = string | ArrayBuffer | Uint8Array | null;
+export type SecretKeyInput = string | ArrayBuffer | Uint8Array;
 
 export type SignatureAlgorithm = "HMAC-SHA256";
 
-export interface SignatureInput<TPayload = PayloadInput> {
+export interface CanonicalRequestInput<TPayload = PayloadInput> {
   method: string;
   path: string;
   query?: URLSearchParams;
@@ -18,12 +19,18 @@ export interface SignatureInput<TPayload = PayloadInput> {
   payload?: TPayload;
   credentialTime: string | Date;
   serviceScope: string;
-  secretKey: string | ArrayBuffer | Uint8Array;
+}
+
+export interface CreateSignatureInput<
+  TPayload = PayloadInput,
+> extends CanonicalRequestInput<TPayload> {
+  algorithm: SignatureAlgorithm;
+  secretKey: SecretKeyInput;
 }
 
 export interface VerifySignatureInput<
   TPayload = PayloadInput,
-> extends SignatureInput<TPayload> {
+> extends CreateSignatureInput<TPayload> {
   signature: string;
 }
 
