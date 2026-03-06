@@ -64,6 +64,24 @@ function toSecretKeyBytes(secretKey: SecretKeyInput): Uint8Array {
 async function computeSignature(
   params: CanonicalRequestInput & {
     secretKey: SecretKeyInput;
+    algorithm: SignatureAlgorithm;
+  },
+  crypto: SignatureCrypto,
+): Promise<{
+  signature: string;
+  signedHeaders: string;
+  credentialTime: string;
+}> {
+  switch (params.algorithm) {
+    case ALGORITHM:
+      return computeSignature_HMAC_SHA256(params, crypto);
+    default:
+      throw new Error(`Unsupported algorithm: ${params.algorithm}.`);
+  }
+}
+async function computeSignature_HMAC_SHA256(
+  params: CanonicalRequestInput & {
+    secretKey: SecretKeyInput;
   },
   crypto: SignatureCrypto,
 ): Promise<{
@@ -124,10 +142,6 @@ export async function createSignatureBase(
   input: CreateSignatureInput,
   crypto: SignatureCrypto,
 ): Promise<SignatureResult> {
-  if (input.algorithm !== ALGORITHM) {
-    throw new Error(`Unsupported algorithm: ${input.algorithm}.`);
-  }
-
   const { signature, signedHeaders, credentialTime } = await computeSignature(
     input,
     crypto,
@@ -146,10 +160,6 @@ export async function verifySignatureBase(
   crypto: SignatureCrypto,
   compare: (expected: string, actual: string) => boolean | Promise<boolean>,
 ): Promise<boolean> {
-  if (input.algorithm !== ALGORITHM) {
-    return false;
-  }
-
   const { signature } = await computeSignature(
     { ...input, secretKey: input.secretKey },
     crypto,
