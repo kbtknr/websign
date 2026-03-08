@@ -1,5 +1,7 @@
 import type {
   CreateSignatureInput,
+  JwkPrivateKey,
+  JwkPublicKey,
   PayloadInput,
   VerifySignatureInput,
 } from "../types";
@@ -57,9 +59,54 @@ async function hmacSha256(
   return new Uint8Array(signature);
 }
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copied = new Uint8Array(bytes.byteLength);
+  copied.set(bytes);
+  return copied.buffer;
+}
+
+async function ed25519Sign(
+  privateKey: JwkPrivateKey,
+  data: Uint8Array,
+): Promise<Uint8Array> {
+  const subtle = crypto.subtle;
+  const key = await subtle.importKey(
+    "jwk",
+    privateKey,
+    { name: "Ed25519" },
+    false,
+    ["sign"],
+  );
+  const signature = await subtle.sign("Ed25519", key, toArrayBuffer(data));
+  return new Uint8Array(signature);
+}
+
+async function ed25519Verify(
+  publicKey: JwkPublicKey,
+  data: Uint8Array,
+  signature: Uint8Array,
+): Promise<boolean> {
+  const subtle = crypto.subtle;
+  const key = await subtle.importKey(
+    "jwk",
+    publicKey,
+    { name: "Ed25519" },
+    false,
+    ["verify"],
+  );
+  return subtle.verify(
+    "Ed25519",
+    key,
+    toArrayBuffer(signature),
+    toArrayBuffer(data),
+  );
+}
+
 const cryptoImpl = {
   sha256Hex,
   hmacSha256,
+  ed25519Sign,
+  ed25519Verify,
 };
 
 async function normalizePayload(

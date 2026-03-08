@@ -1,6 +1,17 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  createPrivateKey,
+  createPublicKey,
+  sign,
+  timingSafeEqual,
+  verify,
+} from "node:crypto";
+import type { KeyObject } from "node:crypto";
 import type {
   CreateSignatureInput,
+  JwkPrivateKey,
+  JwkPublicKey,
   PayloadInput,
   VerifySignatureInput,
 } from "../types";
@@ -24,9 +35,42 @@ function hmacSha256(secretKey: Uint8Array, data: Uint8Array): Uint8Array {
   return createHmac("sha256", Buffer.from(secretKey)).update(data).digest();
 }
 
+function toPrivateKey(input: JwkPrivateKey): KeyObject {
+  return createPrivateKey({
+    key: input,
+    format: "jwk",
+  });
+}
+
+function toPublicKey(input: JwkPublicKey): KeyObject {
+  return createPublicKey({
+    key: input,
+    format: "jwk",
+  });
+}
+
+function ed25519Sign(privateKey: JwkPrivateKey, data: Uint8Array): Uint8Array {
+  return sign(null, Buffer.from(data), toPrivateKey(privateKey));
+}
+
+function ed25519Verify(
+  publicKey: JwkPublicKey,
+  data: Uint8Array,
+  signature: Uint8Array,
+): boolean {
+  return verify(
+    null,
+    Buffer.from(data),
+    toPublicKey(publicKey),
+    Buffer.from(signature),
+  );
+}
+
 const cryptoImpl = {
   sha256Hex,
   hmacSha256,
+  ed25519Sign,
+  ed25519Verify,
 };
 
 function timingSafeEqualHex(
