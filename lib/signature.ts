@@ -23,10 +23,6 @@ import type {
 const ALGORITHM = "HMAC-SHA256" as const;
 const ED25519_ALGORITHM = "Ed25519" as const;
 const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
-const REQUIRED_SIGNED_HEADERS_ED25519 = [
-  ...REQUIRED_SIGNED_HEADERS,
-  "x-websign-nonce",
-] as const;
 const SECRET_KEY_PREFIX = "WebSignature";
 const SIGNING_KEY_APPEND = "websignature_request";
 const textEncoder = new TextEncoder();
@@ -103,22 +99,36 @@ function toSecretKeyBytes(secretKey: SecretKeyInput): Uint8Array {
   return concatBytes(prefixBytes, new Uint8Array(secretKey));
 }
 
+function normalizeNonceHeader(nonceHeader?: string): string | undefined {
+  if (nonceHeader === undefined) {
+    return undefined;
+  }
+  const normalized = nonceHeader.trim().toLowerCase();
+  if (normalized.length === 0) {
+    throw new Error("nonceHeader must not be empty.");
+  }
+  return normalized;
+}
+
 async function buildSigningMaterial(
   input: CanonicalRequestInput & { algorithm: SignatureAlgorithm },
   crypto: SignatureCrypto,
 ): Promise<SigningMaterial> {
   const credentialTime = toCredentialTime(input.credentialTime);
 
-  const requiredSignedHeaders =
-    input.algorithm === ED25519_ALGORITHM
-      ? REQUIRED_SIGNED_HEADERS_ED25519
-      : REQUIRED_SIGNED_HEADERS;
+  const nonceHeader = normalizeNonceHeader(input.nonceHeader);
+  const effectiveSignedHeaders = nonceHeader
+    ? [...input.signedHeaders, nonceHeader]
+    : input.signedHeaders;
+  const requiredHeaders = nonceHeader
+    ? [...REQUIRED_SIGNED_HEADERS, nonceHeader]
+    : REQUIRED_SIGNED_HEADERS;
 
   const { canonicalHeaders, canonicalSignedHeaders } =
     normalizeAndValidateHeaders(
       input.headers,
-      input.signedHeaders,
-      requiredSignedHeaders,
+      effectiveSignedHeaders,
+      requiredHeaders,
     );
 
   const normalizedQuery = normalizeQueryString(
