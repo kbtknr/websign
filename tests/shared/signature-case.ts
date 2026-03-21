@@ -1,4 +1,9 @@
-import type { CreateSignatureInput } from "../../lib/types";
+import type {
+  CanonicalRequestInput,
+  JwkPrivateKey,
+  JwkPublicKey,
+  SecretKeyInput,
+} from "../../lib/types";
 
 export type SignatureCase = {
   name: string;
@@ -10,7 +15,6 @@ export type SignatureCase = {
   payload?: string | null;
   credentialTime: string;
   serviceScope: string;
-  secretKey: string;
 };
 
 export const signatureCase: SignatureCase = {
@@ -30,17 +34,15 @@ export const signatureCase: SignatureCase = {
   payload: '{"message":"hello"}',
   credentialTime: "2025-01-01T00:00:00.000Z",
   serviceScope: "messaging/v1",
-  secretKey: "test-secret-key",
 };
 
-export type SignaturePattern = {
+export type CanonicalBuildPattern = {
   name: string;
-  input: CreateSignatureInput;
+  input: CanonicalRequestInput;
 };
 
-function createBasePatternInput(): CreateSignatureInput {
+function createBaseCanonicalInput(): CanonicalRequestInput {
   return {
-    algorithm: "HMAC-SHA256",
     method: signatureCase.method,
     path: signatureCase.path,
     query: new URLSearchParams(signatureCase.query),
@@ -49,24 +51,23 @@ function createBasePatternInput(): CreateSignatureInput {
     payload: signatureCase.payload,
     credentialTime: new Date(signatureCase.credentialTime),
     serviceScope: signatureCase.serviceScope,
-    secretKey: signatureCase.secretKey,
   };
 }
 
-export const signaturePatterns: SignaturePattern[] = [
-  { name: "base", input: createBasePatternInput() },
+export const canonicalBuildPatterns: CanonicalBuildPattern[] = [
+  { name: "base", input: createBaseCanonicalInput() },
   {
     name: "method-changed",
-    input: { ...createBasePatternInput(), method: "PUT" },
+    input: { ...createBaseCanonicalInput(), method: "PUT" },
   },
   {
     name: "path-changed",
-    input: { ...createBasePatternInput(), path: "/v1/messages/1" },
+    input: { ...createBaseCanonicalInput(), path: "/v1/messages/1" },
   },
   {
     name: "query-changed",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       query: new URLSearchParams({
         ...signatureCase.query,
         token: "abc124",
@@ -76,7 +77,7 @@ export const signaturePatterns: SignaturePattern[] = [
   {
     name: "header-value-changed",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       headers: {
         ...signatureCase.headers,
         "X-Request-Id": "req-0002",
@@ -86,36 +87,121 @@ export const signaturePatterns: SignaturePattern[] = [
   {
     name: "payload-changed",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       payload: '{"message":"hello world"}',
     },
   },
   {
     name: "credential-time-changed",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       credentialTime: new Date("2025-01-01T00:00:01.000Z"),
-    },
-  },
-  {
-    name: "secret-key-changed",
-    input: {
-      ...createBasePatternInput(),
-      secretKey: "test-secret-key-2",
     },
   },
   {
     name: "payload-null",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       payload: null,
     },
   },
   {
     name: "query-empty",
     input: {
-      ...createBasePatternInput(),
+      ...createBaseCanonicalInput(),
       query: new URLSearchParams(),
     },
   },
 ];
+
+type HmacAlgorithmKeyPattern = {
+  name: string;
+  createInput: {
+    algorithm: "HMAC-SHA256";
+    secretKey: SecretKeyInput;
+  };
+  verifyInput: {
+    algorithm: "HMAC-SHA256";
+    secretKey: SecretKeyInput;
+  };
+};
+
+type Ed25519AlgorithmKeyPattern = {
+  name: string;
+  createInput: {
+    algorithm: "Ed25519";
+    privateKey: JwkPrivateKey;
+  };
+  verifyInput: {
+    algorithm: "Ed25519";
+    publicKey: JwkPublicKey;
+  };
+};
+
+export type AlgorithmKeyPattern =
+  | HmacAlgorithmKeyPattern
+  | Ed25519AlgorithmKeyPattern;
+
+const ed25519PrivateKey: JwkPrivateKey = {
+  crv: "Ed25519",
+  d: "0d8Zgs_AaRI4pzw4ZhTIzd6Gfcc3DEe04VBAsUsdY1E",
+  x: "c5WZTTjsSgeiv1gDS1hTwdXD7qZHkZpjbYk2vEMhZxY",
+  kty: "OKP",
+};
+
+const ed25519PublicKey: JwkPublicKey = {
+  crv: "Ed25519",
+  x: "c5WZTTjsSgeiv1gDS1hTwdXD7qZHkZpjbYk2vEMhZxY",
+  kty: "OKP",
+};
+
+export const algorithmKeyPatterns: AlgorithmKeyPattern[] = [
+  {
+    name: "hmac-default-key",
+    createInput: {
+      algorithm: "HMAC-SHA256",
+      secretKey: "test-secret-key",
+    },
+    verifyInput: {
+      algorithm: "HMAC-SHA256",
+      secretKey: "test-secret-key",
+    },
+  },
+  {
+    name: "hmac-alt-key",
+    createInput: {
+      algorithm: "HMAC-SHA256",
+      secretKey: "test-secret-key-2",
+    },
+    verifyInput: {
+      algorithm: "HMAC-SHA256",
+      secretKey: "test-secret-key-2",
+    },
+  },
+  {
+    name: "ed25519-default-key",
+    createInput: {
+      algorithm: "Ed25519",
+      privateKey: ed25519PrivateKey,
+    },
+    verifyInput: {
+      algorithm: "Ed25519",
+      publicKey: ed25519PublicKey,
+    },
+  },
+];
+
+export type SignatureTestCase = {
+  name: string;
+  canonical: CanonicalRequestInput;
+  signer: AlgorithmKeyPattern;
+};
+
+export const signatureTestCases: SignatureTestCase[] = canonicalBuildPatterns.flatMap(
+  (canonicalPattern) =>
+    algorithmKeyPatterns.map((signer) => ({
+      name: `${canonicalPattern.name}__${signer.name}`,
+      canonical: canonicalPattern.input,
+      signer,
+    })),
+);

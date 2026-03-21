@@ -3,7 +3,9 @@ import {
   createSignature as createServerSignature,
   verifySignature as verifyServerSignature,
 } from "../../lib/node/signature";
-import { signaturePatterns } from "../shared/signature-case";
+import {
+  signatureTestCases,
+} from "../shared/signature-case";
 
 test.describe("browser signature", () => {
   test.beforeEach(async ({ page }) => {
@@ -11,33 +13,34 @@ test.describe("browser signature", () => {
   });
 
   test("サーバと同じ入力で同じ署名を返す", async ({ page }) => {
-    // 各パターンごとに署名を作成して検証する
-    for (const { name, input } of signaturePatterns) {
+    for (const testCase of signatureTestCases) {
       const browserResult = await page.evaluate(async (value) => {
         return window.__browserSignature.createByName(value);
-      }, name);
-      const serverResult = await createServerSignature(input);
+      }, testCase.name);
+      const serverResult = await createServerSignature(
+        { ...testCase.canonical, ...testCase.signer.createInput },
+      );
 
-      expect(browserResult.signature, `signature mismatch: ${name}`).toBe(
+      expect(browserResult.signature, `signature mismatch: ${testCase.name}`).toBe(
         serverResult.signature,
       );
-      expect(browserResult.algorithm, `algorithm mismatch: ${name}`).toBe(
+      expect(browserResult.algorithm, `algorithm mismatch: ${testCase.name}`).toBe(
         serverResult.algorithm,
       );
       expect(
         browserResult.signedHeaders,
-        `signedHeaders mismatch: ${name}`,
+        `signedHeaders mismatch: ${testCase.name}`,
       ).toBe(serverResult.signedHeaders);
     }
   });
 
   test("改ざん時にブラウザ検証が false になる", async ({ page }) => {
     const signatures = await Promise.all(
-      signaturePatterns.map(async ({ name }) => {
+      signatureTestCases.map(async (testCase) => {
         const created = await page.evaluate(async (value) => {
           return window.__browserSignature.createByName(value);
-        }, name);
-        return { name, signature: created.signature };
+        }, testCase.name);
+        return { name: testCase.name, signature: created.signature };
       }),
     );
 
@@ -67,17 +70,20 @@ test.describe("browser signature", () => {
   });
 
   test("ブラウザ署名をサーバで検証できる", async ({ page }) => {
-    for (const { name, input } of signaturePatterns) {
+    for (const testCase of signatureTestCases) {
       const browserResult = await page.evaluate(async (value) => {
         return window.__browserSignature.createByName(value);
-      }, name);
+      }, testCase.name);
 
       await expect(
-        verifyServerSignature({
-          ...input,
-          signature: browserResult.signature,
-        }),
-        `server verify failed: ${name}`,
+        verifyServerSignature(
+          {
+            ...testCase.canonical,
+            ...testCase.signer.verifyInput,
+            signature: browserResult.signature,
+          },
+        ),
+        `server verify failed: ${testCase.name}`,
       ).resolves.toBe(true);
     }
   });

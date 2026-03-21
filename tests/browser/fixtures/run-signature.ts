@@ -2,20 +2,22 @@ import {
   createSignature as createBrowserSignature,
   verifySignature as verifyBrowserSignature,
 } from "../../../lib/browser/signature";
-import { signaturePatterns } from "../../shared/signature-case";
+import {
+  signatureTestCases,
+} from "../../shared/signature-case";
 
-type PatternName = (typeof signaturePatterns)[number]["name"];
+type PatternName = (typeof signatureTestCases)[number]["name"];
 
 const patternMap = new Map(
-  signaturePatterns.map((pattern) => [pattern.name, pattern.input]),
+  signatureTestCases.map((testCase) => [testCase.name, testCase]),
 );
 
-function getPatternInput(name: PatternName) {
-  const input = patternMap.get(name);
-  if (!input) {
+function getPattern(name: PatternName) {
+  const pattern = patternMap.get(name);
+  if (!pattern) {
     throw new Error(`Unknown signature pattern: ${name}`);
   }
-  return input;
+  return pattern;
 }
 
 declare global {
@@ -34,12 +36,17 @@ declare global {
 
 window.__browserSignature = {
   createByName(name) {
-    return createBrowserSignature(getPatternInput(name));
+    const pattern = getPattern(name);
+    return createBrowserSignature({
+      ...pattern.canonical,
+      ...pattern.signer.createInput,
+    });
   },
   verifyByName(name, signature) {
-    const input = getPatternInput(name);
+    const pattern = getPattern(name);
     return verifyBrowserSignature({
-      ...input,
+      ...pattern.canonical,
+      ...pattern.signer.verifyInput,
       signature,
     });
   },
