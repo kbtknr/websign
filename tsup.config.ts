@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: {
     "node/index": "lib/node/index.ts",
-    "browser/index": "lib/browser/index.ts",
+    "webcrypto/index": "lib/webcrypto/index.ts",
     types: "lib/types.ts",
   },
   format: ["esm", "cjs"],

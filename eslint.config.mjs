@@ -3,6 +3,17 @@ import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import globals from "globals";
 
+const sharedWebGlobals = {
+  ArrayBuffer: "readonly",
+  Blob: "readonly",
+  BufferSource: "readonly",
+  File: "readonly",
+  Headers: "readonly",
+  TextEncoder: "readonly",
+  URLSearchParams: "readonly",
+  crypto: "readonly",
+};
+
 export default [
   {
     ignores: ["dist/**", "node_modules/**"],
@@ -14,10 +25,7 @@ export default [
       parser: tsParser,
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: {
-        ...globals.browser,
-        BufferSource: "readonly",
-      },
+      globals: sharedWebGlobals,
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
@@ -27,11 +35,9 @@ export default [
     },
   },
   {
-    files: ["lib/browser/**/*.ts"],
+    files: ["lib/webcrypto/**/*.ts"],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
+      globals: sharedWebGlobals,
     },
   },
   {

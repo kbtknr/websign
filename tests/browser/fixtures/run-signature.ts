@@ -1,7 +1,7 @@
 import {
   createSignature as createBrowserSignature,
   verifySignature as verifyBrowserSignature,
-} from "../../../lib/browser/signature";
+} from "../../../lib/webcrypto/signature";
 import { signatureTestCases } from "../../shared/signature-case";
 
 type PatternName = (typeof signatureTestCases)[number]["name"];

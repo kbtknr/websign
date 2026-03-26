@@ -11,22 +11,30 @@
   },
   "main": "./dist/node/index.cjs",
   "module": "./dist/node/index.js",
-  "types": "./dist/types.d.ts",
+  "types": "./dist/node/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types.d.ts",
-      "browser": {
-        "import": "./dist/browser/index.js",
-        "require": "./dist/browser/index.cjs"
+      "types": "./dist/node/index.d.ts",
+      "bun": {
+        "import": "./dist/webcrypto/index.js",
+        "require": "./dist/webcrypto/index.cjs"
       },
-      "import": "./dist/node/index.js",
-      "require": "./dist/node/index.cjs",
-      "default": "./dist/node/index.js"
+      "deno": "./dist/webcrypto/index.js",
+      "browser": {
+        "import": "./dist/webcrypto/index.js",
+        "require": "./dist/webcrypto/index.cjs"
+      },
+      "node": {
+        "import": "./dist/node/index.js",
+        "require": "./dist/node/index.cjs"
+      },
+      "default": "./dist/webcrypto/index.js"
     },
-    "./browser": {
-      "types": "./dist/browser/index.d.ts",
-      "import": "./dist/browser/index.js",
-      "require": "./dist/browser/index.cjs"
+    "./webcrypto": {
+      "types": "./dist/webcrypto/index.d.ts",
+      "import": "./dist/webcrypto/index.js",
+      "require": "./dist/webcrypto/index.cjs",
+      "default": "./dist/webcrypto/index.js"
     },
     "./node": {
       "types": "./dist/node/index.d.ts",
