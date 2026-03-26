@@ -2,9 +2,7 @@ import {
   createSignature as createBrowserSignature,
   verifySignature as verifyBrowserSignature,
 } from "../../../lib/browser/signature";
-import {
-  signatureTestCases,
-} from "../../shared/signature-case";
+import { signatureTestCases } from "../../shared/signature-case";
 
 type PatternName = (typeof signatureTestCases)[number]["name"];
 
@@ -38,15 +36,15 @@ window.__browserSignature = {
   createByName(name) {
     const pattern = getPattern(name);
     return createBrowserSignature({
-      ...pattern.canonical,
-      ...pattern.signer.createInput,
+      ...pattern.canonicalInput,
+      ...pattern.signingKey.createInput,
     });
   },
   verifyByName(name, signature) {
     const pattern = getPattern(name);
     return verifyBrowserSignature({
-      ...pattern.canonical,
-      ...pattern.signer.verifyInput,
+      ...pattern.canonicalInput,
+      ...pattern.signingKey.verifyInput,
       signature,
     });
   },

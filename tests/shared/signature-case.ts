@@ -5,56 +5,31 @@ import type {
   SecretKeyInput,
 } from "../../lib/types";
 
-export type SignatureCase = {
-  name: string;
-  method: string;
-  path: string;
-  query?: Record<string, string>;
-  headers: Record<string, string>;
-  signedHeaders: ReadonlyArray<string>;
-  payload?: string | null;
-  credentialTime: string;
-  serviceScope: string;
-};
-
-export const signatureCase: SignatureCase = {
-  name: "basic-request",
-  method: "POST",
-  path: "/v1/messages",
-  query: {
-    locale: "ja-JP",
-    token: "abc123",
-  },
-  headers: {
-    Host: "api.example.com",
-    "Content-Type": "application/json",
-    "X-Request-Id": "req-0001",
-  },
-  signedHeaders: ["host", "content-type", "x-request-id"],
-  payload: '{"message":"hello"}',
-  credentialTime: "2025-01-01T00:00:00.000Z",
-  serviceScope: "messaging/v1",
-};
-
-export type CanonicalBuildPattern = {
+export type CanonicalRequestCase = {
   name: string;
   input: CanonicalRequestInput;
 };
 
 function createBaseCanonicalInput(): CanonicalRequestInput {
   return {
-    method: signatureCase.method,
-    path: signatureCase.path,
-    query: new URLSearchParams(signatureCase.query),
-    headers: { ...signatureCase.headers },
-    signedHeaders: signatureCase.signedHeaders,
-    payload: signatureCase.payload,
-    credentialTime: new Date(signatureCase.credentialTime),
-    serviceScope: signatureCase.serviceScope,
+    method: "POST",
+    path: "/v1/messages",
+    query: new URLSearchParams("locale=ja-JP&token=abc123"),
+    headers: {
+      Host: "api.example.com",
+      "Content-Type": "application/json",
+      "X-Request-Id": "req-0001",
+      "X-WebSign-Nonce": "nonce-0001",
+    },
+    signedHeaders: ["host", "content-type", "x-request-id"],
+    nonceHeader: "x-websign-nonce",
+    payload: '{"message":"hello"}',
+    credentialTime: new Date("2025-01-01T00:00:00.000Z"),
+    serviceScope: "messaging/v1",
   };
 }
 
-export const canonicalBuildPatterns: CanonicalBuildPattern[] = [
+export const canonicalRequestCases: CanonicalRequestCase[] = [
   { name: "base", input: createBaseCanonicalInput() },
   {
     name: "method-changed",
@@ -64,14 +39,17 @@ export const canonicalBuildPatterns: CanonicalBuildPattern[] = [
     name: "path-changed",
     input: { ...createBaseCanonicalInput(), path: "/v1/messages/1" },
   },
+  { name: "query-empty",
+    input: {
+      ...createBaseCanonicalInput(),
+      query: new URLSearchParams(),
+    },
+  },
   {
     name: "query-changed",
     input: {
       ...createBaseCanonicalInput(),
-      query: new URLSearchParams({
-        ...signatureCase.query,
-        token: "abc124",
-      }),
+      query: new URLSearchParams("locale=ja&token=abc123"),
     },
   },
   {
@@ -79,8 +57,10 @@ export const canonicalBuildPatterns: CanonicalBuildPattern[] = [
     input: {
       ...createBaseCanonicalInput(),
       headers: {
-        ...signatureCase.headers,
+        Host: "api.example.com",
+        "Content-Type": "application/json",
         "X-Request-Id": "req-0002",
+        "X-WebSign-Nonce": "nonce-0001",
       },
     },
   },
@@ -103,13 +83,6 @@ export const canonicalBuildPatterns: CanonicalBuildPattern[] = [
     input: {
       ...createBaseCanonicalInput(),
       payload: null,
-    },
-  },
-  {
-    name: "query-empty",
-    input: {
-      ...createBaseCanonicalInput(),
-      query: new URLSearchParams(),
     },
   },
 ];
@@ -138,7 +111,7 @@ type Ed25519AlgorithmKeyPattern = {
   };
 };
 
-export type AlgorithmKeyPattern =
+export type SigningKeyCase =
   | HmacAlgorithmKeyPattern
   | Ed25519AlgorithmKeyPattern;
 
@@ -155,7 +128,7 @@ const ed25519PublicKey: JwkPublicKey = {
   kty: "OKP",
 };
 
-export const algorithmKeyPatterns: AlgorithmKeyPattern[] = [
+export const signingKeyCases: SigningKeyCase[] = [
   {
     name: "hmac-default-key",
     createInput: {
@@ -193,15 +166,15 @@ export const algorithmKeyPatterns: AlgorithmKeyPattern[] = [
 
 export type SignatureTestCase = {
   name: string;
-  canonical: CanonicalRequestInput;
-  signer: AlgorithmKeyPattern;
+  canonicalInput: CanonicalRequestInput;
+  signingKey: SigningKeyCase;
 };
 
-export const signatureTestCases: SignatureTestCase[] = canonicalBuildPatterns.flatMap(
-  (canonicalPattern) =>
-    algorithmKeyPatterns.map((signer) => ({
-      name: `${canonicalPattern.name}__${signer.name}`,
-      canonical: canonicalPattern.input,
-      signer,
+export const signatureTestCases: SignatureTestCase[] = canonicalRequestCases.flatMap(
+  (canonicalRequestCase) =>
+    signingKeyCases.map((signingKey) => ({
+      name: `${canonicalRequestCase.name}__${signingKey.name}`,
+      canonicalInput: canonicalRequestCase.input,
+      signingKey,
     })),
 );

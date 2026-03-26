@@ -3,9 +3,7 @@ import {
   createSignature as createServerSignature,
   verifySignature as verifyServerSignature,
 } from "../../lib/node/signature";
-import {
-  signatureTestCases,
-} from "../shared/signature-case";
+import { signatureTestCases } from "../shared/signature-case";
 
 test.describe("browser signature", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,7 +16,7 @@ test.describe("browser signature", () => {
         return window.__browserSignature.createByName(value);
       }, testCase.name);
       const serverResult = await createServerSignature(
-        { ...testCase.canonical, ...testCase.signer.createInput },
+        { ...testCase.canonicalInput, ...testCase.signingKey.createInput },
       );
 
       expect(browserResult.signature, `signature mismatch: ${testCase.name}`).toBe(
@@ -78,8 +76,8 @@ test.describe("browser signature", () => {
       await expect(
         verifyServerSignature(
           {
-            ...testCase.canonical,
-            ...testCase.signer.verifyInput,
+            ...testCase.canonicalInput,
+            ...testCase.signingKey.verifyInput,
             signature: browserResult.signature,
           },
         ),
