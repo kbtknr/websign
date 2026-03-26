@@ -15,16 +15,19 @@ test.describe("browser signature", () => {
       const browserResult = await page.evaluate(async (value) => {
         return window.__browserSignature.createByName(value);
       }, testCase.name);
-      const serverResult = await createServerSignature(
-        { ...testCase.canonicalInput, ...testCase.signingKey.createInput },
-      );
+      const serverResult = await createServerSignature({
+        ...testCase.canonicalInput,
+        ...testCase.signingKey.createInput,
+      });
 
-      expect(browserResult.signature, `signature mismatch: ${testCase.name}`).toBe(
-        serverResult.signature,
-      );
-      expect(browserResult.algorithm, `algorithm mismatch: ${testCase.name}`).toBe(
-        serverResult.algorithm,
-      );
+      expect(
+        browserResult.signature,
+        `signature mismatch: ${testCase.name}`,
+      ).toBe(serverResult.signature);
+      expect(
+        browserResult.algorithm,
+        `algorithm mismatch: ${testCase.name}`,
+      ).toBe(serverResult.algorithm);
       expect(
         browserResult.signedHeaders,
         `signedHeaders mismatch: ${testCase.name}`,
@@ -74,13 +77,11 @@ test.describe("browser signature", () => {
       }, testCase.name);
 
       await expect(
-        verifyServerSignature(
-          {
-            ...testCase.canonicalInput,
-            ...testCase.signingKey.verifyInput,
-            signature: browserResult.signature,
-          },
-        ),
+        verifyServerSignature({
+          ...testCase.canonicalInput,
+          ...testCase.signingKey.verifyInput,
+          signature: browserResult.signature,
+        }),
         `server verify failed: ${testCase.name}`,
       ).resolves.toBe(true);
     }

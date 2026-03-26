@@ -39,7 +39,8 @@ export const canonicalRequestCases: CanonicalRequestCase[] = [
     name: "path-changed",
     input: { ...createBaseCanonicalInput(), path: "/v1/messages/1" },
   },
-  { name: "query-empty",
+  {
+    name: "query-empty",
     input: {
       ...createBaseCanonicalInput(),
       query: new URLSearchParams(),
@@ -170,11 +171,11 @@ export type SignatureTestCase = {
   signingKey: SigningKeyCase;
 };
 
-export const signatureTestCases: SignatureTestCase[] = canonicalRequestCases.flatMap(
-  (canonicalRequestCase) =>
+export const signatureTestCases: SignatureTestCase[] =
+  canonicalRequestCases.flatMap((canonicalRequestCase) =>
     signingKeyCases.map((signingKey) => ({
       name: `${canonicalRequestCase.name}__${signingKey.name}`,
       canonicalInput: canonicalRequestCase.input,
       signingKey,
     })),
-);
+  );
