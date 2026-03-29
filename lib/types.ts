@@ -17,8 +17,9 @@ export interface CanonicalRequestInput<TPayload = PayloadInput> {
   path: string;
   query?: URLSearchParams;
   headers: NormalizeHeadersInput;
-  signedHeaders: ReadonlyArray<string>;
   nonceHeader?: string;
+  signedHeaders: ReadonlyArray<string>;
+  requiredSignedHeaders: ReadonlyArray<string>;
   payload?: TPayload;
   credentialTime: string | Date;
   serviceScope: string;

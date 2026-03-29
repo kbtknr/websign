@@ -22,7 +22,6 @@ import type {
 
 const ALGORITHM = "HMAC-SHA256" as const;
 const ED25519_ALGORITHM = "Ed25519" as const;
-const REQUIRED_SIGNED_HEADERS = ["content-type", "host"] as const;
 const SECRET_KEY_PREFIX = "WebSignature";
 const SIGNING_KEY_APPEND = "websignature_request";
 const textEncoder = new TextEncoder();
@@ -121,8 +120,8 @@ async function buildSigningMaterial(
     ? [...input.signedHeaders, nonceHeader]
     : input.signedHeaders;
   const requiredHeaders = nonceHeader
-    ? [...REQUIRED_SIGNED_HEADERS, nonceHeader]
-    : REQUIRED_SIGNED_HEADERS;
+    ? [...input.requiredSignedHeaders, nonceHeader]
+    : input.requiredSignedHeaders;
 
   const { canonicalHeaders, canonicalSignedHeaders } =
     normalizeAndValidateHeaders(
