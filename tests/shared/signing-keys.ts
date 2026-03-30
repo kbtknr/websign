@@ -1,4 +1,4 @@
-import type { JwkPrivateKey, JwkPublicKey } from "../../lib/types";
+import type { JwkPrivateKey, JwkPublicKey } from "../../lib/types.ts";
 
 export const hmacDefaultKey = "test-secret-key";
 export const hmacAltKey = "test-secret-key2";

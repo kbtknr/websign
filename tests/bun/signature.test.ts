@@ -1,12 +1,12 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
   createSignature,
   verifySignature,
-} from "../../lib/node/signature.ts";
+} from "../../lib/webcrypto/signature.ts";
 import { createSignatureTestSuite } from "../shared/signature-test-suite.ts";
 
 createSignatureTestSuite(
-  "node",
+  "bun",
   {
     createSignature,
     verifySignature,

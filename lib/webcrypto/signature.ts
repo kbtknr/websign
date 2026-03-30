@@ -7,12 +7,11 @@ import type {
 } from "../types";
 import { createSignatureBase, verifySignatureBase } from "../signature";
 
-export type BrowserPayloadInput =
+export type WebCryptoPayloadInput =
   | string
   | ArrayBuffer
   | ArrayBufferView
   | Blob
-  | File
   | null;
 
 function toBytes(input: Exclude<PayloadInput, null>): ArrayBuffer {
@@ -110,7 +109,7 @@ const cryptoImpl = {
 };
 
 async function normalizePayload(
-  payload?: BrowserPayloadInput,
+  payload?: WebCryptoPayloadInput,
 ): Promise<PayloadInput | undefined> {
   if (payload === undefined) {
     return undefined;
@@ -153,14 +152,14 @@ function timingSafeEqualHex(left: string, right: string): boolean {
 }
 
 export async function createSignature(
-  input: CreateSignatureInput<BrowserPayloadInput>,
+  input: CreateSignatureInput<WebCryptoPayloadInput>,
 ) {
   const payload = await normalizePayload(input.payload);
   return createSignatureBase({ ...input, payload }, cryptoImpl);
 }
 
 export async function verifySignature(
-  input: VerifySignatureInput<BrowserPayloadInput>,
+  input: VerifySignatureInput<WebCryptoPayloadInput>,
 ): Promise<boolean> {
   const payload = await normalizePayload(input.payload);
   return verifySignatureBase(

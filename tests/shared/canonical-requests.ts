@@ -1,4 +1,4 @@
-import type { CanonicalRequestInput } from "../../lib/types";
+import type { CanonicalRequestInput } from "../../lib/types.ts";
 
 export type CanonicalRequestCase = {
   // Test case name
