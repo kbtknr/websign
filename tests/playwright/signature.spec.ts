@@ -5,8 +5,8 @@ import {
 } from "../../lib/node/signature";
 import { canonicalRequestCases } from "../shared/canonical-requests";
 import {
-  ed25519PublicKey,
-  ed25519PrivateKey,
+  ed25519DefaultPublicKey,
+  ed25519DefaultPrivateKey,
   hmacDefaultKey,
 } from "../shared/signing-keys";
 
@@ -39,7 +39,7 @@ async function createBrowserEd25519Signature(
     {
       canonicalRequestName,
       canonicalRequestIndex,
-      privateKey: ed25519PrivateKey,
+      privateKey: ed25519DefaultPrivateKey,
     },
   );
 }
@@ -91,7 +91,7 @@ test.describe("browser signature", () => {
           const serverResult = await createServerSignature({
             ...canonicalInput,
             algorithm: "Ed25519",
-            privateKey: ed25519PrivateKey,
+            privateKey: ed25519DefaultPrivateKey,
           });
 
           expect(
@@ -189,7 +189,7 @@ test.describe("browser signature", () => {
             verifyServerSignature({
               ...canonicalInput,
               algorithm: "Ed25519",
-              publicKey: ed25519PublicKey,
+              publicKey: ed25519DefaultPublicKey,
               signature: browserResult.signature,
             }),
             `Ed25519 server verify failed: ${testCase.name}[${index}]`,

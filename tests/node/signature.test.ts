@@ -5,8 +5,8 @@ import {
 } from "../../lib/node/signature";
 import { canonicalRequestCases } from "../shared/canonical-requests";
 import {
-  ed25519PublicKey,
-  ed25519PrivateKey,
+  ed25519DefaultPublicKey,
+  ed25519DefaultPrivateKey,
   hmacDefaultKey,
 } from "../shared/signing-keys";
 
@@ -48,7 +48,7 @@ async function createNodeEd25519Signature(
   return createSignature({
     ...canonicalInput,
     algorithm: "Ed25519",
-    privateKey: ed25519PrivateKey,
+    privateKey: ed25519DefaultPrivateKey,
   });
 }
 
@@ -102,7 +102,7 @@ describe("node signature", () => {
             verifySignature({
               ...canonicalInput,
               algorithm: "Ed25519",
-              publicKey: ed25519PublicKey,
+              publicKey: ed25519DefaultPublicKey,
               signature: nodeResult.signature,
             }),
             `Ed25519 node verify failed: ${testCase.name}[${index}]`,
