@@ -5,8 +5,11 @@ import {
 } from "../../lib/node/signature";
 import { canonicalRequestCases } from "../shared/canonical-requests";
 import {
+  ed25519AltPrivateKey,
+  ed25519AltPublicKey,
   ed25519DefaultPublicKey,
   ed25519DefaultPrivateKey,
+  hmacAltKey,
   hmacDefaultKey,
 } from "../shared/signing-keys";
 
@@ -162,5 +165,95 @@ describe("node signature", () => {
         }
       });
     }
+  });
+
+  describe("鍵差分", () => {
+    test("HMAC はキーが変われば署名が変わる", async () => {
+      const canonicalInput = canonicalRequestCases[0]?.input[0];
+
+      if (!canonicalInput) {
+        throw new Error("Canonical request not found: base[0]");
+      }
+
+      const defaultResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "HMAC-SHA256",
+        secretKey: hmacDefaultKey,
+      });
+      const altResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "HMAC-SHA256",
+        secretKey: hmacAltKey,
+      });
+
+      expect(defaultResult.signature).not.toBe(altResult.signature);
+    });
+
+    test("HMAC はキーが変われば検証に失敗する", async () => {
+      const canonicalInput = canonicalRequestCases[0]?.input[0];
+
+      if (!canonicalInput) {
+        throw new Error("Canonical request not found: base[0]");
+      }
+
+      const defaultResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "HMAC-SHA256",
+        secretKey: hmacDefaultKey,
+      });
+
+      await expect(
+        verifySignature({
+          ...canonicalInput,
+          algorithm: "HMAC-SHA256",
+          secretKey: hmacAltKey,
+          signature: defaultResult.signature,
+        }),
+      ).resolves.toBe(false);
+    });
+
+    test("Ed25519 はキーが変われば署名が変わる", async () => {
+      const canonicalInput = canonicalRequestCases[0]?.input[0];
+
+      if (!canonicalInput) {
+        throw new Error("Canonical request not found: base[0]");
+      }
+
+      const defaultResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "Ed25519",
+        privateKey: ed25519DefaultPrivateKey,
+      });
+      const altResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "Ed25519",
+        privateKey: ed25519AltPrivateKey,
+      });
+
+      expect(defaultResult.signature).not.toBe(altResult.signature);
+    });
+
+    test("Ed25519 はキーが変われば検証に失敗する", async () => {
+      const canonicalInput = canonicalRequestCases[0]?.input[0];
+
+      if (!canonicalInput) {
+        throw new Error("Canonical request not found: base[0]");
+      }
+
+      const defaultResult = await createSignature({
+        ...canonicalInput,
+        algorithm: "Ed25519",
+        privateKey: ed25519DefaultPrivateKey,
+      });
+
+      await expect(
+        verifySignature({
+          ...canonicalInput,
+          algorithm: "Ed25519",
+          publicKey: ed25519AltPublicKey,
+          signature: defaultResult.signature,
+        }),
+      ).resolves.toBe(false);
+    });
   });
 });
