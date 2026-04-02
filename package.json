@@ -1,5 +1,5 @@
 {
-  "name": "websign",
+  "name": "@kbtknr/websign",
   "version": "0.1.0",
   "type": "module",
   "description": "Request signature utilities for Web APIs in Node.js and modern browsers.",
