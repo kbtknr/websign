@@ -6,14 +6,14 @@ import type {
 
 export type SigningKey =
   | {
-    algorithm: "HMAC-SHA256";
-    secretKey: string;
-  }
+      algorithm: "HMAC-SHA256";
+      secretKey: string;
+    }
   | {
-    algorithm: "Ed25519";
-    privateKey: JwkPrivateKey;
-    publicKey: JwkPublicKey;
-  };
+      algorithm: "Ed25519";
+      privateKey: JwkPrivateKey;
+      publicKey: JwkPublicKey;
+    };
 
 export type SignatureVector = {
   name: string;
