@@ -21,7 +21,10 @@ type Describe = (name: string, fn: () => void) => void;
 
 type Test = (name: string, fn: () => Promise<void> | void) => void;
 
-type Expect = (value: unknown, message?: string) => {
+type Expect = (
+  value: unknown,
+  message?: string,
+) => {
   toBe: (expected: unknown) => void;
 };
 

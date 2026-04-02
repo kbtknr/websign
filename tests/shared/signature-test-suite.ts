@@ -23,7 +23,10 @@ type VerifySignature = (
 ) => Promise<boolean>;
 type Describe = (name: string, fn: () => void) => void;
 type Test = (name: string, fn: () => Promise<void> | void) => void;
-type Expect = (value: unknown, message?: string) => {
+type Expect = (
+  value: unknown,
+  message?: string,
+) => {
   toBe: (expected: unknown) => void;
   not: {
     toBe: (expected: unknown) => void;
@@ -34,11 +37,9 @@ function getCanonicalInput(
   canonicalRequestName: string,
   canonicalRequestIndex = 0,
 ) {
-  const canonicalInput =
-    canonicalRequestCases.find(
-      (value) => value.name === canonicalRequestName,
-    )
-      ?.input[canonicalRequestIndex];
+  const canonicalInput = canonicalRequestCases.find(
+    (value) => value.name === canonicalRequestName,
+  )?.input[canonicalRequestIndex];
 
   if (!canonicalInput) {
     throw new Error(
@@ -119,10 +120,9 @@ export function createSignatureTestSuite(
               signature: result.signature,
             });
 
-            expect(
-              ok,
-              `HMAC verify failed: ${testCase.name}[${index}]`,
-            ).toBe(true);
+            expect(ok, `HMAC verify failed: ${testCase.name}[${index}]`).toBe(
+              true,
+            );
           }
         });
         test(`Ed25519: ${testCase.name}`, async () => {
