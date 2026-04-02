@@ -1,7 +1,7 @@
 # websign
 
 Node.js、Bun、Deno、モダンブラウザで使える、Web API リクエスト署名ユーティリティです。  
-`HMAC-SHA256` で署名の作成と検証を行います。
+`HMAC-SHA256` と `Ed25519` で署名の作成と検証を行います。
 
 ## 特徴
 
@@ -22,7 +22,7 @@ deno add npm:websign
 
 ## クイックスタート
 
-`HMAC-SHA256` を使う場合の全入力パラメータを含む例です。
+`HMAC-SHA256` を使う場合の全入力パラメータを含む例です。`Ed25519` もサポートしています。
 
 ```ts
 import { createSignature, verifySignature } from "websign";
@@ -131,7 +131,7 @@ import { createSignature, verifySignature } from "websign/webcrypto";
 
 戻り値:
 
-- `algorithm` (`"HMAC-SHA256"`)
+- `algorithm` (`"HMAC-SHA256"` | `"Ed25519"`)
 - `credentialTime` (`YYYYMMDDTHHmmssZ`)
 - `signedHeaders` (`;` 区切り)
 - `signature` (16進小文字)
@@ -144,9 +144,9 @@ import { createSignature, verifySignature } from "websign/webcrypto";
 
 ```bash
 npm install
-npx playwright install --with-deps chromium
+npx playwright install chromium
 npm run test:node
-npm run test:browser
+npm run test:playwright
 npm run test:deno
 npm run test:bun
 ```
@@ -165,4 +165,5 @@ MIT
 
 - このライブラリは鍵管理を提供しません。秘密鍵は安全なストレージで管理してください。
 - `credentialTime` の許容ずれ（例: ±5分）は呼び出し側で必ず検証してください。
-- 本番では HTTPS を前提にし、署名対象ヘッダを固定して運用してください。
+- `nonceHeader` は署名対象に含められますが、再送防止のための nonce の一意性確認と保存済み nonce の拒否は呼び出し側で実装してください。
+- 本番では HTTPS を前提にし、`requiredSignedHeaders` を呼び出し側で固定して運用してください。

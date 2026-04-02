@@ -1,7 +1,6 @@
 {
   "name": "websign",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Request signature utilities for Web APIs in Node.js and modern browsers.",
   "license": "MIT",
